@@ -1,0 +1,3189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Intelligence · Tata Motors</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Rajdhani:wght@500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f6;--surface:#ffffff;--surface2:#f5f7fb;--surface3:#eef1f7;
+  --border:#e2e6ef;--border2:#cdd3e0;
+  --text:#0d1829;--muted:#64748b;--dim:#94a3b8;
+  --blue:#1a56db;--blue-light:#dbeafe;--cyan:#0891b2;--green:#059669;
+  --green-light:#d1fae5;--amber:#d97706;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fee2e2;--purple:#7c3aed;
+  --tata:#003399;--tata2:#0055cc;--tata-gold:#c9a227;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.1),0 4px 8px rgba(0,0,0,.06);
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;min-height:100vh;overflow-x:hidden}
+
+/* ═══ UPLOAD SCREEN ═══ */
+#upload-screen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
+.up-bg-pattern{position:absolute;inset:0;background-image:radial-gradient(circle at 25% 25%,rgba(26,86,219,.06) 0%,transparent 50%),radial-gradient(circle at 75% 75%,rgba(0,51,153,.06) 0%,transparent 50%);pointer-events:none}
+.up-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,86,219,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(26,86,219,.06) 1px,transparent 1px);background-size:48px 48px;opacity:.7}
+.up-content{position:relative;z-index:1;text-align:center;max-width:520px;width:90%;padding:20px}
+.up-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:36px}
+.up-brand-logo{width:48px;height:48px;background:var(--tata);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,51,153,.3)}
+.up-brand-logo svg{width:28px;height:28px;fill:#fff}
+.up-brand-text{text-align:left}
+.up-brand-name{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--tata);letter-spacing:.5px;line-height:1}
+.up-brand-sub{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+.up-drop{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:52px 40px;background:var(--surface);cursor:pointer;position:relative;transition:border-color .2s,box-shadow .2s,transform .15s;box-shadow:var(--shadow-sm)}
+.up-drop:hover,.up-drop.drag{border-color:var(--blue);box-shadow:0 0 0 5px rgba(26,86,219,.08),var(--shadow-md);transform:translateY(-2px)}
+.up-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.up-icon-ring{width:68px;height:68px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;background:var(--surface2);transition:all .2s}
+.up-drop:hover .up-icon-ring{border-color:var(--blue);background:var(--blue-light);box-shadow:0 0 0 6px rgba(26,86,219,.06)}
+.up-icon-ring svg{width:28px;height:28px;stroke:var(--blue);fill:none;stroke-width:1.5;transition:transform .2s}
+.up-drop:hover .up-icon-ring svg{transform:translateY(-2px)}
+.up-h1{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:.2px}
+.up-p{color:var(--muted);line-height:1.7;font-size:13px}
+.up-p b{color:var(--blue)}
+.up-formats{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.up-fmt{padding:3px 12px;border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;border:1px solid var(--border);color:var(--dim);background:var(--surface2)}
+.up-footer{margin-top:28px;font-size:11px;color:var(--dim);letter-spacing:.06em;font-family:'DM Mono',monospace}
+/* GAS CONNECT CARD */
+.gas-card{background:var(--surface);border-radius:var(--radius-lg);padding:28px 32px;box-shadow:var(--shadow-md);border:1px solid var(--border);margin-bottom:14px;text-align:left}
+.gas-card-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--tata);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.gas-badge-live{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.25);font-size:9px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace;letter-spacing:.05em}
+.gas-badge-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
+.gas-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.gas-input-row{display:flex;gap:8px;align-items:stretch}
+.gas-input{flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border-color .2s,box-shadow .2s}
+.gas-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.gas-btn{padding:10px 20px;background:var(--tata);border:none;border-radius:8px;color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.gas-btn:hover{background:var(--tata2);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,51,153,.25)}
+.gas-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.gas-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.gas-err{margin-top:10px;padding:8px 12px;border-radius:7px;background:var(--red-light);border:1px solid rgba(220,38,38,.25);color:var(--red);font-size:11px;display:none}
+.gas-err.show{display:block}
+.up-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--dim);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.06em}
+.up-divider::before,.up-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ═══ LOADING ═══ */
+#loading{position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.96);display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+.load-brand{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--tata);letter-spacing:.5px;margin-bottom:8px}
+.load-ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--blue);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-steps{display:flex;flex-direction:column;gap:5px;align-items:center}
+.load-step{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);opacity:0;transform:translateY(4px);transition:all .3s}
+.load-step.active{opacity:1;transform:none;color:var(--blue)}
+
+/* ═══ DASHBOARD ═══ */
+#dashboard{display:none;min-height:100vh}
+
+/* HEADER BAR */
+.header-bar{background:var(--tata);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,51,153,.3);position:sticky;top:0;z-index:60}
+.hb-brand{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hb-logo{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.hb-logo svg{width:20px;height:20px;fill:#fff}
+.hb-name{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.4px}
+.hb-div{width:1px;height:28px;background:rgba(255,255,255,.2);margin:0 4px}
+.hb-module{font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;letter-spacing:.1em}
+.hb-file{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:8px;padding:6px 12px;margin-left:8px}
+.hb-file-icon{width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
+.hb-file-icon svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2}
+.hb-fname{font-size:12px;font-weight:600;color:#fff}
+.hb-fmeta{font-size:10px;color:rgba(255,255,255,.55);font-family:'DM Mono',monospace}
+.hb-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hb-btn{padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;font-weight:500}
+.hb-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.hb-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.hb-btn.primary{background:var(--tata-gold);border-color:var(--tata-gold);color:#1a1a00;font-weight:600}
+.hb-btn.primary:hover{background:#e0b52b;filter:brightness(1.05)}
+.view-toggle{display:flex;border:1px solid rgba(255,255,255,.25);border-radius:8px;overflow:hidden;background:rgba(255,255,255,.08)}
+.vtbtn{padding:6px 14px;background:transparent;border:none;color:rgba(255,255,255,.65);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;font-weight:500}
+.vtbtn.active{background:rgba(255,255,255,.2);color:#fff}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;position:relative;flex-shrink:0}
+.live-dot::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #4ade80;animation:pulseRing 2s infinite;opacity:.5}
+@keyframes pulseRing{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.8);opacity:0}}
+
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:0;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm)}
+.stat-cell{background:var(--surface);padding:14px 18px;cursor:pointer;transition:background .15s,box-shadow .15s;position:relative;border-right:1px solid var(--border)}
+.stat-cell:last-child{border-right:none}
+.stat-cell::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:1px 1px 0 0}
+.stat-cell.danger::after{background:var(--red)}.stat-cell.success::after{background:var(--green)}.stat-cell.warn::after{background:var(--amber)}.stat-cell.info::after{background:var(--blue)}
+.stat-cell:hover{background:var(--surface2);box-shadow:inset 0 -2px 0 var(--blue)}
+.sc-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.sc-value{font-size:20px;font-weight:700;letter-spacing:-.5px;line-height:1;font-family:'Rajdhani',sans-serif}
+.sc-sub{font-size:10px;color:var(--dim);margin-top:3px}
+.sc-trend{font-size:10px;margin-top:2px;font-weight:600}
+.sc-trend.up{color:var(--green)}.sc-trend.down{color:var(--red)}.sc-trend.flat{color:var(--muted)}
+.sc-value.col-red{color:var(--red)}.sc-value.col-green{color:var(--green)}.sc-value.col-amber{color:var(--amber)}.sc-value.col-blue{color:var(--blue)}.sc-value.col-text{color:var(--text)}
+
+/* DATE FILTER BAR */
+.filter-bar{background:var(--surface);padding:8px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fb-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.fb-date{padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color .2s}
+.fb-date:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.fb-quick{display:flex;gap:4px}
+.fb-qbtn{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+.fb-qbtn:hover,.fb-qbtn.active{background:rgba(26,86,219,.07);color:var(--blue);border-color:rgba(26,86,219,.3)}
+.fb-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.fb-rows-info{font-size:11px;color:var(--dim);font-family:'DM Mono',monospace;margin-left:auto;white-space:nowrap}
+
+/* SHOP TABS */
+.shop-nav{background:var(--surface);padding:10px 24px;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center;overflow-x:auto}
+.shop-pill{padding:5px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.shop-pill.active{background:var(--tata);border-color:var(--tata);color:#fff;box-shadow:0 2px 6px rgba(0,51,153,.25)}
+.shop-pill:not(.active):hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.nav-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+
+/* INSIGHTS BANNER */
+.insights-bar{background:linear-gradient(135deg,#1a1f3a 0%,#0d2359 100%);padding:12px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border)}
+.insights-icon{width:32px;height:32px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.insights-icon svg{width:16px;height:16px;stroke:#93c5fd;fill:none;stroke-width:2}
+.insights-label{font-size:10px;color:rgba(255,255,255,.5);font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.insights-text{font-size:12px;color:rgba(255,255,255,.9);font-weight:500}
+.insights-chips{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.insight-chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;white-space:nowrap}
+.ic-green{background:rgba(5,150,105,.15);border-color:rgba(5,150,105,.3);color:#6ee7b7}
+.ic-red{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3);color:#fca5a5}
+.ic-amber{background:rgba(217,119,6,.15);border-color:rgba(217,119,6,.3);color:#fcd34d}
+.ic-blue{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.3);color:#93c5fd}
+
+/* MAIN CONTENT AREA */
+.dash-main{padding:18px 24px;display:flex;flex-direction:column;gap:14px}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .2s;box-shadow:var(--shadow-sm)}
+.panel:hover{box-shadow:var(--shadow-md)}
+.panel-head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;align-items:center;gap:7px}
+.panel-dot{width:6px;height:6px;border-radius:50%}
+.panel-body{padding:14px 16px}
+.panel-actions{display:flex;gap:5px;align-items:center}
+.p-btn{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+.p-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.p-btn.active{background:rgba(26,86,219,.08);color:var(--blue);border-color:rgba(26,86,219,.2)}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:220px 1fr 1fr 200px;gap:14px}
+
+/* SHOP INFO */
+.shop-badge{display:inline-flex;align-items:center;gap:7px;padding:4px 12px 4px 6px;border-radius:20px;border:1px solid rgba(26,86,219,.2);background:rgba(26,86,219,.06);margin-bottom:12px}
+.shop-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--tata)}
+.shop-badge-text{font-size:13px;font-weight:600;color:var(--tata);font-family:'Rajdhani',sans-serif;letter-spacing:.3px}
+.info-grid{display:flex;flex-direction:column;gap:0}
+.ig-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.ig-row:last-child{border-bottom:none}
+.ig-k{font-size:11px;color:var(--muted)}
+.ig-v{font-size:12px;font-weight:700;font-family:'DM Mono',monospace}
+.ig-v.blue{color:var(--tata)}.ig-v.green{color:var(--green)}.ig-v.red{color:var(--red)}.ig-v.amber{color:var(--amber)}
+
+/* GAUGE-STYLE KPI */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.kpi-block{background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border);transition:border-color .15s}
+.kpi-block:hover{border-color:var(--border2)}
+.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-family:'DM Mono',monospace}
+.kpi-val{font-size:18px;font-weight:700;letter-spacing:-.5px;font-family:'Rajdhani',sans-serif}
+.kpi-bar{height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.kpi-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.25,.46,.45,.94)}
+
+/* BD BOX */
+.bd-section{margin-top:12px;border-radius:8px;border:1px solid rgba(217,119,6,.2);background:rgba(217,119,6,.04);padding:10px}
+.bd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bd-label{font-size:10px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.05em}
+.bd-count{font-size:18px;font-weight:700;color:var(--amber);font-family:'Rajdhani',monospace}
+.bd-item{font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.bd-item:last-child{border:none}
+.bd-item::before{content:'▸ ';color:var(--amber);font-size:9px}
+
+/* CHART TOOLS */
+.chart-wrap{position:relative}
+.chart-legend-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.cl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid transparent;transition:all .15s}
+.cl-item:hover{background:var(--surface2);border-color:var(--border)}
+.cl-item.hidden{opacity:.3}
+.cl-swatch{width:12px;height:3px;border-radius:2px}
+.target-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:5px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);font-size:10px;color:var(--green);font-weight:600}
+
+/* LOSS BAR */
+.loss-list{display:flex;flex-direction:column;gap:5px}
+.loss-row{display:flex;align-items:center;gap:8px}
+.loss-row-top .loss-name{color:var(--red);font-weight:700}
+.loss-name-wrap{display:flex;flex-direction:column;width:72px;flex-shrink:0;gap:1px}
+.loss-name{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.loss-top-badge{font-size:7px;font-weight:700;color:#fff;background:var(--red);padding:1px 4px;border-radius:3px;display:inline-block;letter-spacing:.05em}
+.loss-material-tag{font-size:8px;color:var(--dim);font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px}
+.loss-track{flex:1;height:14px;background:var(--surface2);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.loss-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;font-size:9px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;white-space:nowrap;transition:width .9s cubic-bezier(.25,.46,.45,.94)}
+.loss-val{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;width:42px;text-align:right;flex-shrink:0}
+
+/* BD SUMMARY */
+.bd-summary-item{padding:6px 9px;border-radius:7px;border:1px solid var(--border);margin-bottom:6px;background:var(--surface2);transition:background .15s,box-shadow .15s}
+.bd-summary-item:hover{background:var(--surface3);box-shadow:var(--shadow-sm)}
+.bd-rep-critical{border-left:3px solid var(--red)!important;border-color:rgba(220,38,38,.35)!important;background:rgba(220,38,38,.06)!important}
+.bd-rep-high{border-left:3px solid var(--amber)!important;border-color:rgba(217,119,6,.35)!important;background:rgba(217,119,6,.06)!important}
+.bd-rep-med{border-left:3px solid var(--blue)!important;border-color:rgba(26,86,219,.25)!important;background:rgba(26,86,219,.04)!important}
+.bd-reason-text{font-size:10px;color:var(--text);flex:1;margin-right:6px;line-height:1.4;word-break:break-word;font-weight:500}
+.bd-freq-badge{font-size:9px;font-family:'DM Mono',monospace;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--surface3);color:var(--muted);flex-shrink:0}
+.bd-freq-critical{background:rgba(220,38,38,.18);color:var(--red)}
+.bd-freq-high{background:rgba(217,119,6,.18);color:var(--amber)}
+.bd-freq-med{background:rgba(26,86,219,.15);color:var(--blue)}
+.bd-freq-bar{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+.bd-freq-fill{height:100%;border-radius:2px;transition:width .9s cubic-bezier(.25,.46,.45,.94)}
+.bd-dates-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.bd-date-tag{font-size:8px;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:3px;background:rgba(26,86,219,.08);color:var(--tata);border:1px solid rgba(26,86,219,.15)}
+.bd-section-head{display:flex;align-items:center;gap:5px;font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;padding:4px 7px;border-radius:5px}
+.bd-head-critical{color:var(--red);background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2)}
+.bd-head-normal{color:var(--muted);background:var(--surface2);border:1px solid var(--border)}
+
+/* BD TOTAL TIME STRIP */
+.bd-total-strip{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(124,58,237,.10) 0%,rgba(124,58,237,.04) 100%);border:1px solid rgba(124,58,237,.25);border-radius:7px;padding:7px 11px;margin-bottom:9px;gap:8px}
+.bd-total-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;color:var(--purple);font-weight:600}
+.bd-total-value{font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--purple);letter-spacing:-.3px}
+.bd-total-unit{font-size:9px;color:var(--purple);opacity:.7;font-family:'DM Mono',monospace;margin-left:2px}
+
+/* REMARK DT EXPAND */
+.remark-card{cursor:pointer}
+.remark-dt-expand{display:none;margin-top:6px;padding:5px 8px;border-radius:5px;background:rgba(26,86,219,.07);border:1px solid rgba(26,86,219,.18);font-size:10px;font-family:'DM Mono',monospace;color:var(--tata);line-height:1.7}
+.remark-dt-expand.open{display:block}
+.remark-dt-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(26,86,219,.1);padding:2px 0}
+.remark-dt-row:last-child{border-bottom:none}
+.remark-dt-total-row{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:4px;border-top:1.5px solid rgba(124,58,237,.25)}
+.remark-dt-total-label{font-size:9px;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.remark-dt-total-val{font-size:12px;font-weight:700;font-family:'Rajdhani',sans-serif;color:var(--purple)}
+.remark-card.expanded .remark-bar-wrap{display:none}
+
+/* REMARKS */
+.remark-scroll{max-height:360px;overflow-y:auto;padding-right:2px}
+.remark-scroll::-webkit-scrollbar{width:3px}
+.remark-scroll::-webkit-scrollbar-track{background:transparent}
+.remark-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.remark-day{margin-bottom:10px}
+.remark-date{font-size:10px;font-family:'DM Mono',monospace;color:var(--tata);margin-bottom:4px;padding:3px 8px;background:rgba(26,86,219,.06);border-radius:4px;display:inline-block}
+.remark-text{font-size:10px;color:var(--muted);line-height:1.6;padding:4px 0;border-bottom:1px solid var(--border)}
+.remark-dt-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace;font-size:9px;font-weight:600;margin-left:6px}
+.rdt-high{background:var(--red-light);color:var(--red)}.rdt-med{background:var(--amber-light);color:var(--amber)}.rdt-low{background:var(--green-light);color:var(--green)}
+.remark-section-header{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;padding:4px 8px;border-radius:5px;margin-bottom:7px;font-weight:700}
+.remark-section-header.critical{color:var(--red);background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2)}
+.remark-section-header.normal{color:var(--muted);background:var(--surface2);border:1px solid var(--border)}
+.remark-card{padding:7px 10px;border-radius:7px;border:1px solid var(--border);margin-bottom:6px;background:var(--surface2);transition:background .15s,box-shadow .15s}
+.remark-card:hover{background:var(--surface3);box-shadow:var(--shadow-sm)}
+.remark-card.rep-critical{border-left:3px solid var(--red)!important;border-color:rgba(220,38,38,.35)!important;background:rgba(220,38,38,.06)!important}
+.remark-card.rep-high{border-left:3px solid var(--amber)!important;border-color:rgba(217,119,6,.35)!important;background:rgba(217,119,6,.06)!important}
+.remark-card.rep-med{border-left:3px solid var(--blue)!important;border-color:rgba(26,86,219,.25)!important;background:rgba(26,86,219,.04)!important}
+.remark-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.remark-row span:first-child{font-size:10px;color:var(--text);font-weight:500;flex:1;margin-right:6px;line-height:1.4;word-break:break-word}
+.remark-row span:last-child{font-size:9px;font-family:'DM Mono',monospace;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.remark-row .badge-critical{background:rgba(220,38,38,.18);color:var(--red)}
+.remark-row .badge-high{background:rgba(217,119,6,.18);color:var(--amber)}
+.remark-row .badge-med{background:rgba(26,86,219,.15);color:var(--blue)}
+.remark-row .badge-single{background:var(--surface3);color:var(--muted)}
+.remark-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+.remark-bar{height:100%;border-radius:2px;transition:width .9s cubic-bezier(.25,.46,.45,.94)}
+
+/* TABLE VIEW */
+#table-view{display:none}
+.data-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface2);padding:10px 12px;text-align:left;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+thead th:hover{color:var(--text)}
+thead th .sort-arrow{margin-left:4px;opacity:.3}
+thead th.sort-asc .sort-arrow::after{content:'↑';opacity:1}
+thead th.sort-desc .sort-arrow::after{content:'↓';opacity:1}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:8px 12px;color:var(--text);white-space:nowrap}
+.td-num{font-family:'DM Mono',monospace;text-align:right}
+.td-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600}
+.pill-r{background:var(--red-light);color:var(--red)}.pill-a{background:var(--amber-light);color:var(--amber)}.pill-g{background:var(--green-light);color:var(--green)}
+
+/* TABLE CONTROLS */
+.table-controls{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tc-search{flex:1;min-width:200px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .2s}
+.tc-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.tc-search::placeholder{color:var(--dim)}
+.tc-select{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color .2s}
+.tc-select:focus{border-color:var(--blue)}
+.tc-count{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap}
+.tc-export{padding:7px 14px;background:var(--tata);border:none;border-radius:8px;color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:5px}
+.tc-export:hover{background:var(--tata2)}
+.tc-export svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* EXPORT / PRINT */
+.export-modal{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+.export-modal.open{display:flex}
+.export-box{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:380px;max-width:90%;box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+.export-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+.export-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.export-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.export-opt{display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
+.export-opt:hover,.export-opt.selected{border-color:var(--blue);background:rgba(26,86,219,.04)}
+.eo-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.eo-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5}
+.eo-label{font-size:13px;font-weight:600;color:var(--text)}
+.eo-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.export-btns{display:flex;gap:8px}
+.ebtn{flex:1;padding:10px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid}
+.ebtn.cancel{background:transparent;border-color:var(--border);color:var(--muted)}
+.ebtn.cancel:hover{background:var(--surface2);color:var(--text)}
+.ebtn.confirm{background:var(--tata);border-color:var(--tata);color:#fff}
+.ebtn.confirm:hover{background:var(--tata2)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .35s ease both}
+.fade-up-1{animation-delay:.05s}.fade-up-2{animation-delay:.1s}.fade-up-3{animation-delay:.15s}.fade-up-4{animation-delay:.2s}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* PRINT */
+@media print{
+  .header-bar .hb-actions,.filter-bar .fb-quick,.shop-nav,.insights-bar,
+  .topbar-actions,.panel-actions,.hb-btn{display:none!important}
+  #upload-screen,#loading,#table-view,#export-modal{display:none!important}
+  body{background:#fff}
+  .header-bar{position:static;background:#003399!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .panel{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+  .stat-strip,.main-grid{break-inside:avoid}
+}
+
+/* TREND FULLSCREEN MODAL */
+#trend-fullscreen-modal{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;background:rgba(10,15,30,.92);backdrop-filter:blur(8px)}
+#trend-fullscreen-modal.open{display:flex}
+.tfs-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.tfs-title{display:flex;align-items:center;gap:9px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
+.tfs-title-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0}
+.tfs-meta{font-size:11px;color:rgba(255,255,255,.45);font-family:'DM Mono',monospace;margin-left:4px;font-weight:400}
+.tfs-controls{display:flex;align-items:center;gap:8px}
+.tfs-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tfs-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.65);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid transparent;transition:all .15s}
+.tfs-leg-item:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+.tfs-leg-item.hidden{opacity:.3}
+.tfs-leg-swatch{width:14px;height:3px;border-radius:2px}
+.tfs-close{width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.tfs-close:hover{background:rgba(220,38,38,.25);border-color:rgba(220,38,38,.4);color:#fff}
+.tfs-close svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2}
+.tfs-body{flex:1;padding:20px 28px 24px;display:flex;flex-direction:column;overflow:hidden}
+.tfs-badges{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.tfs-badge{display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:600}
+.tfs-badge-green{background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.3);color:#6ee7b7}
+.tfs-badge-orange{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);color:#fdba74}
+.tfs-chart-wrap{flex:1;position:relative;min-height:0}
+.tfs-chart-wrap canvas{width:100%!important;height:100%!important}
+
+/* Expand button on the trend panel */
+.trend-expand-btn{padding:4px 9px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500;display:flex;align-items:center;gap:4px}
+.trend-expand-btn:hover{background:rgba(26,86,219,.07);color:var(--blue);border-color:rgba(26,86,219,.25)}
+.trend-expand-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* TOOLTIP */
+.kpi-block[data-tip]{position:relative;cursor:help}
+.kpi-block[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0d1829;color:#e2e8f0;font-size:10px;font-family:'DM Mono',monospace;padding:5px 10px;border-radius:5px;white-space:nowrap;z-index:10;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+
+<!-- ── UPLOAD ── -->
+<div id="upload-screen">
+  <div class="up-bg-pattern"></div>
+  <div class="up-grid"></div>
+  <div class="up-content" style="max-width:560px">
+    <div class="up-brand">
+      <div class="up-brand-logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="up-brand-text">
+        <div class="up-brand-name">TATA MOTORS</div>
+        <div class="up-brand-sub">Production Intelligence · FY27</div>
+      </div>
+    </div>
+
+    <!-- ── GOOGLE SHEETS LIVE CONNECT ── -->
+    <div class="gas-card">
+      <div class="gas-card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tata)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Connect Google Sheets
+        <span class="gas-badge-live">LIVE</span>
+      </div>
+      <div class="gas-card-sub">Paste your Google Apps Script Web App URL to load production data directly — no file download needed.</div>
+      <div class="gas-input-row">
+        <input class="gas-input" id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" spellcheck="false"/>
+        <button class="gas-btn" id="gas-load-btn" onclick="loadFromGAS()">
+          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Load Live Data
+        </button>
+      </div>
+      <div class="gas-err" id="gas-err"></div>
+    </div>
+
+    <div class="up-divider">or upload a file</div>
+
+    <!-- ── FILE UPLOAD ── -->
+    <div class="up-drop" id="drop-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv"/>
+      <div class="up-icon-ring">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="up-h1">Drop Your Production File</div>
+      <div class="up-p">Drag &amp; drop or <b>click to browse</b> — auto-generates<br>shop-wise efficiency &amp; downtime analytics dashboard</div>
+      <div class="up-formats">
+        <span class="up-fmt">.xlsx</span>
+        <span class="up-fmt">.xls</span>
+        <span class="up-fmt">.csv</span>
+      </div>
+    </div>
+    <div class="up-footer">Confidential · Internal Use Only · Tata Motors Ltd.</div>
+  </div>
+</div>
+
+<!-- ── LOADING ── -->
+<div id="loading">
+  <div class="load-brand">TATA MOTORS</div>
+  <div class="load-ring"></div>
+  <div class="load-steps">
+    <div class="load-step" id="ls1">Connecting to Google Sheets…</div>
+    <div class="load-step" id="ls2">Fetching production data…</div>
+    <div class="load-step" id="ls3">Building analytics dashboard…</div>
+  </div>
+</div>
+
+<!-- ── TREND FULLSCREEN MODAL ── -->
+<div id="trend-fullscreen-modal">
+  <div class="tfs-header">
+    <div class="tfs-title">
+      <div class="tfs-title-dot"></div>
+      Efficiency &amp; Production Trend
+      <span class="tfs-meta" id="tfs-meta-label"></span>
+    </div>
+    <div class="tfs-controls">
+      <div class="tfs-legend" id="tfs-legend"></div>
+      <button class="tfs-close" onclick="closeTrendFullscreen()" title="Close (Esc)">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="tfs-body">
+    <div class="tfs-badges" id="tfs-badges"></div>
+    <div class="tfs-chart-wrap">
+      <canvas id="tfs-canvas" role="img" aria-label="Fullscreen efficiency trend chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ── EXPORT MODAL ── -->
+<div class="export-modal" id="export-modal">
+  <div class="export-box">
+    <div class="export-title">Export Report</div>
+    <div class="export-sub">Choose your preferred export format for the current dashboard view.</div>
+    <div class="export-opts">
+      <div class="export-opt selected" onclick="selectExport('print',this)">
+        <div class="eo-icon" style="background:#dbeafe;color:#1a56db"><svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+        <div><div class="eo-label">Print / Save as PDF</div><div class="eo-desc">Full dashboard layout, print-optimized</div></div>
+      </div>
+      <div class="export-opt" onclick="selectExport('csv',this)">
+        <div class="eo-icon" style="background:#d1fae5;color:#059669"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div><div class="eo-label">Export as CSV</div><div class="eo-desc">Raw data table, all visible rows</div></div>
+      </div>
+    </div>
+    <div class="export-btns">
+      <button class="ebtn cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="ebtn confirm" onclick="doExport()">Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+
+  <!-- HEADER -->
+  <div class="header-bar">
+    <div class="hb-brand">
+      <div class="hb-logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="hb-name">TATA MOTORS</div>
+    </div>
+    <div class="hb-div"></div>
+    <div class="hb-module">Production Intelligence</div>
+    <div class="hb-file">
+      <div class="hb-file-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div>
+        <div class="hb-fname" id="dash-fname">—</div>
+        <div class="hb-fmeta" id="dash-meta">—</div>
+      </div>
+    </div>
+    <div class="hb-actions">
+      <div class="live-dot"></div>
+      <button class="hb-btn" id="shop-compare-btn" onclick="openShopComparison()" title="Compare all shops by capacity utilization">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="6" height="18" rx="1"/><rect x="9" y="8" width="6" height="13" rx="1"/><rect x="16" y="5" width="6" height="16" rx="1"/></svg>
+        Shop Comparison
+      </button>
+      <button class="hb-btn" id="analysis-btn" onclick="openAnalysisPage()" title="Deep analysis with drill-down across all shops and metrics">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        Analysis
+      </button>
+      <button class="hb-btn" onclick="resetApp()">
+        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        New File
+      </button>
+    </div>
+  </div>
+
+  <!-- STAT STRIP -->
+  <div id="stat-strip-wrapper">
+    <div id="stat-strip-header" style="display:none;background:var(--tata);padding:4px 24px;display:flex;align-items:center;gap:10px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="stat-strip-year-label" style="font-size:10px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.75);letter-spacing:.1em;text-transform:uppercase">Overall Year Summary</span>
+    </div>
+    <div class="stat-strip" id="stat-strip"></div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar" id="filter-bar" style="display:none">
+    <span class="fb-label">Date Range</span>
+    <input type="date" class="fb-date" id="fb-from" onchange="applyDateFilter()">
+    <span style="font-size:11px;color:var(--dim)">to</span>
+    <input type="date" class="fb-date" id="fb-to" onchange="applyDateFilter()">
+    <div class="fb-sep"></div>
+    <div class="fb-quick">
+      <button class="fb-qbtn" onclick="quickFilter(7,this)">7D</button>
+      <button class="fb-qbtn" onclick="quickFilter(30,this)">30D</button>
+      <button class="fb-qbtn" onclick="quickFilter(90,this)">90D</button>
+      <button class="fb-qbtn active" onclick="quickFilter(0,this)">All</button>
+    </div>
+    <span class="fb-rows-info" id="fb-rows-info"></span>
+  </div>
+
+  <!-- SHOP TABS -->
+  <div class="shop-nav" id="shop-nav"></div>
+
+  <!-- INSIGHTS BANNER -->
+  <div class="insights-bar" id="insights-bar" style="display:none">
+    <div class="insights-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    <div>
+      <div class="insights-label">Smart Insights</div>
+      <div class="insights-text" id="insights-text">Analysing production data…</div>
+    </div>
+    <div class="insights-chips" id="insights-chips"></div>
+  </div>
+
+  <!-- CHART VIEW -->
+  <div id="chart-view">
+    <div class="dash-main" id="main-content"></div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div id="table-view">
+    <div class="dash-main">
+      <div class="panel fade-up">
+        <div class="panel-head">
+          <div class="panel-title"><div class="panel-dot" style="background:var(--blue)"></div>Data Table</div>
+          <div class="panel-actions">
+            <button class="tc-export" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download CSV
+            </button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="table-controls">
+            <input class="tc-search" id="tbl-search" placeholder="🔍  Search rows…" oninput="filterTable()"/>
+            <select class="tc-select" id="tbl-col-filter" onchange="filterTable()"><option value="">All columns</option></select>
+            <span class="tc-count" id="tbl-count"></span>
+          </div>
+          <div class="data-table-wrap">
+            <table id="data-table">
+              <thead id="tbl-head"></thead>
+              <tbody id="tbl-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SHOP COMPARISON PAGE OVERLAY
+═══════════════════════════════════════════════════ -->
+<style>
+/* ── Shop Comparison Filter Bar ── */
+.sc-filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:56px;z-index:50;box-shadow:var(--shadow-sm)}
+.sc-fb-group{display:flex;align-items:center;gap:8px}
+.sc-fb-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.sc-fb-select{padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color .2s;min-width:140px}
+.sc-fb-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.sc-dur-btns{display:flex;gap:4px}
+.sc-dur-btn{padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+.sc-dur-btn:hover{background:rgba(26,86,219,.07);color:var(--blue);border-color:rgba(26,86,219,.3)}
+.sc-dur-btn.active{background:var(--tata);border-color:var(--tata);color:#fff;box-shadow:0 2px 6px rgba(0,51,153,.2)}
+.sc-fb-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+.sc-data-range{font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;margin-left:auto;display:flex;align-items:center;gap:5px}
+</style>
+
+<div id="shop-comparison-view" style="display:none;position:fixed;inset:0;z-index:400;background:var(--bg);overflow-y:auto;opacity:0;transition:opacity .35s ease">
+
+  <!-- COMPARISON HEADER -->
+  <div style="background:var(--tata);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,51,153,.3);position:sticky;top:0;z-index:60">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.4px">TATA MOTORS</span>
+    </div>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,.2)"></div>
+    <span style="font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;letter-spacing:.1em">Shop Comparison — Performance Analysis</span>
+    <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;margin-left:8px;border:1px solid rgba(255,255,255,.15)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="sc-date-label" style="font-size:11px;color:rgba(255,255,255,.8);font-family:'DM Mono',monospace">All Data</span>
+    </div>
+    <div style="margin-left:auto">
+      <button onclick="closeShopComparison()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="sc-filter-bar">
+    <div class="sc-fb-group">
+      <span class="sc-fb-label">Shop</span>
+      <select id="sc-shop-filter" class="sc-fb-select" onchange="renderShopComparison()">
+        <option value="all">All Shops</option>
+      </select>
+    </div>
+    <div class="sc-fb-sep"></div>
+    <div class="sc-fb-group">
+      <span class="sc-fb-label">Duration</span>
+      <div class="sc-dur-btns">
+        <button class="sc-dur-btn active" data-months="1" onclick="scSetDuration(1,this)">1 Month</button>
+        <button class="sc-dur-btn" data-months="3" onclick="scSetDuration(3,this)">3 Months</button>
+        <button class="sc-dur-btn" data-months="6" onclick="scSetDuration(6,this)">6 Months</button>
+        <button class="sc-dur-btn" data-months="12" onclick="scSetDuration(12,this)">12 Months</button>
+      </div>
+    </div>
+    <div class="sc-data-range">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="sc-range-display">—</span>
+    </div>
+  </div>
+
+  <!-- COMPARISON BODY -->
+  <div style="padding:20px 24px;display:flex;flex-direction:column;gap:18px">
+
+    <!-- CHART 1: Shop Performance Comparison -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--blue)"></div>
+          Shop Performance Comparison – All Shops
+        </div>
+        <div style="display:flex;gap:14px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:10px;background:rgba(0,51,153,.75);border-radius:2px;display:inline-block"></span>Actual Production</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:10px;background:rgba(245,158,11,.75);border-radius:2px;display:inline-block"></span>Line Efficiency (%)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:10px;background:rgba(220,38,38,.75);border-radius:2px;display:inline-block"></span>Gross DT (Min)</span>
+        </div>
+      </div>
+      <div style="padding:16px 20px 20px;height:380px;position:relative">
+        <canvas id="sc-perf-chart" role="img" aria-label="Shop performance comparison chart"></canvas>
+      </div>
+    </div>
+
+    <!-- CHART 2: MTTR & MTBF Analysis -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px">
+      <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--purple)"></div>
+          MTTR &amp; MTBF Analysis
+        </div>
+        <div style="display:flex;gap:14px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:10px;background:rgba(124,58,237,.75);border-radius:2px;display:inline-block"></span>Sum of MTTR (Min)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:10px;background:rgba(8,145,178,.75);border-radius:2px;display:inline-block"></span>Sum of MTBF (Min)</span>
+        </div>
+      </div>
+      <div style="padding:16px 20px 20px;height:340px;position:relative">
+        <canvas id="sc-mttr-chart" role="img" aria-label="MTTR and MTBF analysis chart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ANALYSIS PAGE OVERLAY
+═══════════════════════════════════════════════════ -->
+<style>
+/* ── Analysis Page ── */
+#analysis-view{position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;display:none;opacity:0;transition:opacity .35s ease}
+.an-header{background:var(--tata);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,51,153,.3);position:sticky;top:0;z-index:60}
+.an-metric-tabs{background:var(--surface);border-bottom:2px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto;position:sticky;top:56px;z-index:50;box-shadow:var(--shadow-sm)}
+.an-tab{padding:11px 16px;border:none;background:transparent;color:var(--muted);font-size:11.5px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .2s;letter-spacing:.01em}
+.an-tab:hover{color:var(--text);background:var(--surface2)}
+.an-tab.active{color:var(--tata);border-bottom-color:var(--tata);font-weight:700;background:rgba(0,51,153,.04)}
+.an-filter-bar{background:var(--surface);padding:10px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:107px;z-index:45;box-shadow:var(--shadow-sm)}
+.an-dur-btn{padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:500}
+.an-dur-btn:hover{background:rgba(26,86,219,.07);color:var(--blue);border-color:rgba(26,86,219,.3)}
+.an-dur-btn.active{background:var(--tata);border-color:var(--tata);color:#fff;box-shadow:0 2px 6px rgba(0,51,153,.2)}
+.an-content{padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:18px}
+.an-shop-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .2s}
+.an-shop-card:hover{box-shadow:var(--shadow-md)}
+.an-card-head{padding:11px 16px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(0,51,153,.06) 0%,rgba(0,85,204,.02) 100%);display:flex;align-items:center;justify-content:space-between}
+.an-card-title{font-size:12px;font-weight:700;color:var(--tata);font-family:'Rajdhani',sans-serif;letter-spacing:.5px;display:flex;align-items:center;gap:7px}
+.an-card-title-dot{width:7px;height:7px;border-radius:50%;background:var(--tata)}
+.an-card-meta{font-size:10px;color:var(--dim);font-family:'DM Mono',monospace}
+.an-chart-wrap{padding:12px 14px 14px;height:220px;position:relative;cursor:pointer}
+.an-chart-wrap canvas{cursor:pointer}
+.an-kpi-row{display:flex;gap:0;border-top:1px solid var(--border)}
+.an-kpi{flex:1;padding:8px 12px;border-right:1px solid var(--border);text-align:center}
+.an-kpi:last-child{border-right:none}
+.an-kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'DM Mono',monospace;margin-bottom:3px}
+.an-kpi-val{font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:-.3px}
+.an-click-hint{font-size:9px;color:var(--dim);font-family:'DM Mono',monospace;padding:4px 14px 6px;border-top:1px solid var(--border);display:flex;align-items:center;gap:5px;background:var(--surface2)}
+
+/* ── Drill-down Modal ── */
+#an-drilldown{position:fixed;inset:0;z-index:600;background:rgba(13,24,41,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+#an-drilldown.open{display:flex}
+.an-dd-box{background:var(--surface);border-radius:14px;width:92%;max-width:900px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:ddIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes ddIn{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+.an-dd-head{background:var(--tata);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.an-dd-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:.4px}
+.an-dd-sub{font-size:10px;color:rgba(255,255,255,.65);font-family:'DM Mono',monospace;margin-top:2px}
+.an-dd-close{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:#fff;font-size:12px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .15s}
+.an-dd-close:hover{background:rgba(255,255,255,.25)}
+.an-dd-body{padding:20px;overflow-y:auto;flex:1}
+.an-dd-chart-wrap{height:300px;position:relative;margin-bottom:16px}
+.an-dd-table{width:100%;border-collapse:collapse;font-size:11px}
+.an-dd-table th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:2px solid var(--border);white-space:nowrap}
+.an-dd-table td{padding:6px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:11px}
+.an-dd-table tr:hover td{background:var(--surface2)}
+.an-dd-table td.num{text-align:right;font-weight:600}
+.an-dd-kpi-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.an-dd-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;flex:1;min-width:120px}
+.an-dd-kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin-bottom:4px}
+.an-dd-kpi-val{font-size:20px;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:-.4px}
+.an-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:160px;color:var(--dim);font-family:'DM Mono',monospace;font-size:11px;gap:8px;text-align:center}
+.an-range-label{font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;margin-left:auto}
+</style>
+
+<div id="analysis-view">
+  <!-- ANALYSIS HEADER -->
+  <div class="an-header">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.4px">TATA MOTORS</span>
+    </div>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,.2)"></div>
+    <span style="font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;letter-spacing:.1em">Analysis — Multi-Shop Drill-Down</span>
+    <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;margin-left:8px;border:1px solid rgba(255,255,255,.15)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="an-date-label" style="font-size:11px;color:rgba(255,255,255,.8);font-family:'DM Mono',monospace">All Data</span>
+    </div>
+    <div style="margin-left:auto">
+      <button onclick="closeAnalysisPage()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- METRIC TABS -->
+  <div class="an-metric-tabs" id="an-metric-tabs">
+    <button class="an-tab active" data-metric="oe_le" onclick="anSetMetric('oe_le',this)">OE &amp; Line Efficiency</button>
+    <button class="an-tab" data-metric="production" onclick="anSetMetric('production',this)">Actual Production</button>
+    <button class="an-tab" data-metric="uptime_adt" onclick="anSetMetric('uptime_adt',this)">UpTime by Affected DT</button>
+    <button class="an-tab" data-metric="uptime_gdt" onclick="anSetMetric('uptime_gdt',this)">UpTime by GDT</button>
+    <button class="an-tab" data-metric="act_tgt" onclick="anSetMetric('act_tgt',this)">Act vs Tgt Gross Dwt &amp; Aff Dwt</button>
+    <button class="an-tab" data-metric="mttr_mtbf" onclick="anSetMetric('mttr_mtbf',this)">MTTR &amp; MTBF</button>
+    <button class="an-tab" data-metric="loss" onclick="anSetMetric('loss',this)">Loss &amp; Downtime Analysis</button>
+    <button class="an-tab" data-metric="breakdown" onclick="anSetMetric('breakdown',this)">Breakdown</button>
+    <button class="an-tab" data-metric="shop_perf" onclick="anSetMetric('shop_perf',this)">Shop Performance</button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="an-filter-bar">
+    <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em">Duration</span>
+    <div style="display:flex;gap:4px">
+      <button class="an-dur-btn active" data-months="1" onclick="anSetDuration(1,this)">1 Month</button>
+      <button class="an-dur-btn" data-months="3" onclick="anSetDuration(3,this)">3 Months</button>
+      <button class="an-dur-btn" data-months="6" onclick="anSetDuration(6,this)">6 Months</button>
+      <button class="an-dur-btn" data-months="12" onclick="anSetDuration(12,this)">12 Months</button>
+      <button class="an-dur-btn" data-months="0" onclick="anSetDuration(0,this)">All Data</button>
+    </div>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+    <span class="an-range-label" id="an-range-label">—</span>
+  </div>
+
+  <!-- ANALYSIS CONTENT GRID -->
+  <div class="an-content" id="an-content">
+    <div class="an-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Load a file to begin analysis</div>
+  </div>
+</div>
+
+<!-- DRILL-DOWN MODAL -->
+<div id="an-drilldown">
+  <div class="an-dd-box">
+    <div class="an-dd-head">
+      <div>
+        <div class="an-dd-title" id="an-dd-title">Drill-Down</div>
+        <div class="an-dd-sub" id="an-dd-sub">Day-wise data</div>
+      </div>
+      <button class="an-dd-close" onclick="closeAnDrilldown()">✕ Close</button>
+    </div>
+    <div class="an-dd-body">
+      <div class="an-dd-kpi-row" id="an-dd-kpis"></div>
+      <div class="an-dd-chart-wrap"><canvas id="an-dd-canvas"></canvas></div>
+      <div id="an-dd-table-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Register chartjs-plugin-datalabels globally
+if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+// ─────────────────────────────────────────────
+let workbook=null, allData={}, allDataUnfiltered={}, chartInst=[], currentShop=null, currentView='chart';
+let sortState={}, tableRows=[], tableFilteredRows=[];
+let selectedExport='print';
+
+// ── Google Apps Script live fetch ──
+const GAS_URL_KEY = 'plantops_gas_url_v3_meeting_block'; // matches the React app's LS key
+(function initGASInput(){
+  const saved = (localStorage.getItem(GAS_URL_KEY) || '').trim();
+  const inp = document.getElementById('gas-url-input');
+  if(inp && saved) inp.value = saved;
+  // If a URL is already saved, skip the upload screen and auto-load directly
+  if(saved) {
+    // Short delay so the page DOM is fully ready before fetching
+    setTimeout(loadFromGAS, 120);
+  }
+})();
+
+async function loadFromGAS(){
+  const inp = document.getElementById('gas-url-input');
+  const btn = document.getElementById('gas-load-btn');
+  const errEl = document.getElementById('gas-err');
+  const url = (inp ? inp.value : '').trim();
+  if(!url){ showGASErr('Please paste your Google Apps Script Web App URL.'); return; }
+  if(!url.startsWith('http')){ showGASErr('URL must start with https://script.google.com/…'); return; }
+
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  showLoading(true);
+
+  try {
+    // Persist so the React app and next visit can reuse it
+    localStorage.setItem(GAS_URL_KEY, url);
+
+    const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'action=dashboardData';
+    const res = await fetch(fetchUrl, { method: 'GET' });
+    if(!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error || 'API returned an error.');
+    const rows = json.rows || [];
+    if(!rows.length) throw new Error('No production data found. Please submit at least one shift report first.');
+
+    // ── Convert flat JSON rows → the same internal allData format processWorkbook() builds ──
+    // allData[shopName] = array of row objects with exact column-name keys the dashboard needs
+    const byShop = {};
+    rows.forEach(row => {
+      const shop = String(row['ShopName'] || row['Shop'] || '').trim().toUpperCase();
+      if(!shop) return;
+      if(!byShop[shop]) byShop[shop] = [];
+      byShop[shop].push(row);
+    });
+
+    if(!Object.keys(byShop).length) throw new Error('No valid shop data found in the response.');
+
+    // Feed into the dashboard directly (bypassing file parse step)
+    allData = byShop;
+    allDataUnfiltered = JSON.parse(JSON.stringify(byShop));
+
+    // Detect global date key from first row
+    const firstRow = rows[0] || {};
+    globalDateKey = Object.keys(firstRow).find(k => /^date$/i.test(k.trim())) || 'Date';
+
+    // Flatten all rows for stat strip, insights, table
+    const allRows = rows;
+    tableRows = [...allRows];
+
+    const shopNames = Object.keys(byShop);
+
+    // Update header bar
+    document.getElementById('dash-fname').textContent = 'Live Google Sheets';
+    document.getElementById('dash-meta').textContent = `${allRows.length} rows · ${shopNames.length} shop(s) · real-time`;
+
+    // Show filter bar
+    if(globalDateKey){ document.getElementById('filter-bar').style.display = 'flex'; }
+    document.getElementById('fb-rows-info').textContent = `${allRows.length} rows`;
+
+    buildStatStrip(allRows, true);
+    buildInsights(allRows);
+    buildShopNav(shopNames);
+    buildTableView(allRows);
+    renderShop(shopNames[0]);
+
+    document.getElementById('upload-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  } catch(err) {
+    showLoading(false);
+    showGASErr(String(err.message || err));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Load Live Data';
+    showLoading(false);
+  }
+}
+
+function showGASErr(msg){
+  const el = document.getElementById('gas-err');
+  if(!el) return;
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('show');
+}
+
+// ── Drag & Drop ──
+const dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])});
+fi.addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0])});
+
+function showLoading(v){
+  document.getElementById('loading').style.display=v?'flex':'none';
+  if(v){['ls1','ls2','ls3'].forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('active'),i*450));}
+  else{['ls1','ls2','ls3'].forEach(id=>document.getElementById(id).classList.remove('active'));}
+}
+function resetApp(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('upload-screen').style.display='flex';
+  fi.value=''; workbook=null; allData={}; allDataUnfiltered={};
+  destroyCharts();
+}
+function destroyCharts(){chartInst.forEach(c=>{try{c.destroy()}catch(e){}});chartInst=[];}
+function switchView(v){
+  currentView=v;
+  document.getElementById('chart-view').style.display=v==='chart'?'block':'none';
+  document.getElementById('table-view').style.display=v==='table'?'block':'none';
+  document.getElementById('vt-chart').classList.toggle('active',v==='chart');
+  document.getElementById('vt-table').classList.toggle('active',v==='table');
+}
+
+// ── Export ──
+function openExportModal(){document.getElementById('export-modal').classList.add('open')}
+function closeExportModal(){document.getElementById('export-modal').classList.remove('open')}
+function selectExport(type,el){selectedExport=type;document.querySelectorAll('.export-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected')}
+function doExport(){
+  closeExportModal();
+  if(selectedExport==='print'){window.print();}
+  else if(selectedExport==='csv'){exportCSV();}
+}
+function exportCSV(){
+  if(!tableRows.length)return;
+  const cols=Object.keys(tableRows[0]);
+  const rows=tableFilteredRows.length?tableFilteredRows:tableRows;
+  const csv=[cols.join(','),...rows.map(r=>cols.map(c=>JSON.stringify(r[c]??'')).join(','))].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='production_data_export.csv';
+  a.click();
+}
+document.getElementById('export-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeExportModal()});
+
+// ── Load File ──
+function loadFile(file){
+  showLoading(true);
+  document.getElementById('upload-screen').style.display='none';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      workbook=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      setTimeout(()=>{processWorkbook(file);showLoading(false);document.getElementById('dashboard').style.display='block';},700);
+    }catch(err){showLoading(false);document.getElementById('upload-screen').style.display='flex';alert('Parse error: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Helpers ──
+function getCol(row,pats){
+  const keys=Object.keys(row||{});
+  for(const p of pats){const k=keys.find(k=>k.toLowerCase().includes(p.toLowerCase()));if(k)return k;}
+  return null;
+}
+function gv(row,pats,def=0){const k=getCol(row,pats);const v=k?row[k]:null;const p=parseFloat(v);return isNaN(p)?def:p;}
+function fmt(v,dec=2){return isNaN(v)?'—':(+v.toFixed(dec)).toLocaleString('en-IN',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
+function fmtDate(v){if(v instanceof Date)return v.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});return String(v||'').replace(/^\d{4}-/,'').substring(0,5);}
+function toDate(v){
+  if(v instanceof Date)return v;
+  if(typeof v==='number'&&v>40000&&v<60000){const d=new Date((v-25569)*86400000);return isNaN(d)?null:d;}
+  if(typeof v==='string'){const m=v.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);if(m){const[,dd,mm,yyyy]=m;const fy=yyyy.length===2?'20'+yyyy:yyyy;const d=new Date(fy+'-'+mm.padStart(2,'0')+'-'+dd.padStart(2,'0'));return isNaN(d)?null:d;}}
+  const d=new Date(v);return isNaN(d)?null:d;
+}
+
+// ── Date Filter ──
+let dateFrom=null, dateTo=null, globalDateKey=null;
+function applyDateFilter(){
+  const fromVal=document.getElementById('fb-from').value;
+  const toVal=document.getElementById('fb-to').value;
+  dateFrom=fromVal?new Date(fromVal+'T00:00:00'):null;
+  dateTo=toVal?new Date(toVal+'T23:59:59'):null;
+  const shops=Object.keys(allDataUnfiltered);
+  shops.forEach(s=>{
+    allData[s]=allDataUnfiltered[s].filter(r=>{
+      if(!globalDateKey)return true;
+      const d=toDate(r[globalDateKey]);
+      if(!d)return true;
+      // Compare using local date string to avoid UTC offset issues
+      const dStr=d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+      if(dateFrom&&dStr<fromVal)return false;
+      if(dateTo&&dStr>toVal)return false;
+      return true;
+    });
+  });
+  const allRows=shops.flatMap(s=>allData[s]);
+  const info=`${allRows.length} rows`;
+  document.getElementById('fb-rows-info').textContent=info;
+  // stat strip is NOT updated — it always shows the full year dataset
+  buildInsights(allRows);
+  if(currentShop)renderShop(currentShop);
+}
+function quickFilter(days,btn){
+  document.querySelectorAll('.fb-qbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(!days){
+    document.getElementById('fb-from').value='';
+    document.getElementById('fb-to').value='';
+  } else {
+    const pad=n=>n.toString().padStart(2,'0');
+    const toYMD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+    if(globalDateKey){
+      const allRows=Object.values(allDataUnfiltered).flat();
+      // Collect all unique dates across ALL shops, sorted descending
+      const allDates=allRows.map(r=>toDate(r[globalDateKey])).filter(Boolean);
+      allDates.sort((a,b)=>b-a);
+
+      if(allDates.length){
+        // Use the global max date as the "to" anchor
+        const refDate=allDates[0];
+
+        // Find "from" date: go back until we have covered at least `days`
+        // unique calendar dates that have data in ANY shop
+        const uniqueSorted=[...new Set(allDates.map(d=>toYMD(d)))].sort((a,b)=>b.localeCompare(a));
+        // Take the last `days` unique data dates
+        const sliced=uniqueSorted.slice(0,days);
+        const fromStr=sliced[sliced.length-1]; // oldest of those dates
+        document.getElementById('fb-to').value=toYMD(refDate);
+        document.getElementById('fb-from').value=fromStr;
+      } else {
+        // Fallback: no dates found, clear filter
+        document.getElementById('fb-from').value='';
+        document.getElementById('fb-to').value='';
+      }
+    } else {
+      // No date key — nothing to filter
+      document.getElementById('fb-from').value='';
+      document.getElementById('fb-to').value='';
+    }
+  }
+  applyDateFilter();
+}
+
+// ── Junk-Row Filter ──
+// The known list of valid shop names (case-insensitive prefix match).
+// Exact lowercase shop names for your plant — add any new shop here.
+// The row-2 sub-header (which contains the word "Shop") is caught by
+// JUNK_SHOP_VALUES and discarded before any data ever reaches the dashboard.
+const VALID_SHOP_NAMES = new Set([
+  'tcf-1','tcf-2','x4-biw','q5-biw','paint','nova','x1','press','ta65','ta78','engine'
+]);
+// Any row whose ShopName cell exactly matches one of these labels is a
+// sub-header / artefact row and must be ignored everywhere in the dashboard.
+const JUNK_SHOP_VALUES = new Set([
+  'shop','shopname','shop name','name','month','date','production','shift',
+  'available time','cycle time','capacity','actual production time',
+  'net dt','ar','pr','qr','oe','oee','line efficiency','lineff','lineeff'
+]);
+function isValidShopValue(v){
+  if(!v) return false;
+  const s = String(v).trim().toLowerCase();
+  if(!s) return false;
+  if(JUNK_SHOP_VALUES.has(s)) return false;   // explicit sub-header rejection
+  // Accept if it exactly matches a known shop name …
+  if(VALID_SHOP_NAMES.has(s)) return true;
+  // … or starts with a known shop prefix (handles suffixes like "TCF-1A")
+  const PREFIXES = ['tcf','x4-biw','q5-biw','paint','nova','x1','press','ta65','ta78','engine'];
+  return PREFIXES.some(p => s.startsWith(p));
+}
+function cleanRows(rawRows, shopKey){
+  if(!shopKey) return rawRows;                                   // no shop column → keep all
+  return rawRows.filter(r => isValidShopValue(r[shopKey]));
+}
+
+// ── Process ──
+function processWorkbook(file){
+  const sheetName=workbook.SheetNames.find(s=>s.toLowerCase().includes('production')||s.toLowerCase().includes('data'))||workbook.SheetNames[0];
+  const rawRows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:'',cellDates:true});
+  if(!rawRows.length){alert('No data found');return;}
+
+  // Detect shop column from the very first raw row (guaranteed to be the real header)
+  const shopKey=getCol(rawRows[0],['ShopName','Shop','shop','SHOP']);
+
+  // Strip sub-header rows, label rows, and any row whose shop value is not a
+  // recognised shop name (e.g. the "Shop" / "Month" second-header row).
+  const rows = cleanRows(rawRows, shopKey);
+  if(!rows.length){alert('No valid production rows found after filtering sub-headers.');return;}
+
+  tableRows=[...rows];
+
+  const shops=shopKey?[...new Set(rows.map(r=>r[shopKey]).filter(Boolean))]:['All'];
+  shops.forEach(s=>{allDataUnfiltered[s]=shopKey?rows.filter(r=>r[shopKey]===s):rows;allData[s]=[...allDataUnfiltered[s]];});
+
+  globalDateKey=getCol(rows[0],['Date','date']);
+
+  document.getElementById('dash-fname').textContent=file.name;
+  document.getElementById('dash-meta').textContent=`${rows.length.toLocaleString()} rows · ${shops.length} shop(s) · ${workbook.SheetNames.length} sheet(s)`;
+
+  // Show filter bar
+  if(globalDateKey){document.getElementById('filter-bar').style.display='flex';}
+  document.getElementById('fb-rows-info').textContent=`${rows.length.toLocaleString()} rows`;
+
+  buildStatStrip(rows, true);
+  buildInsights(rows);
+  buildShopNav(shops);
+  buildTableView(rows);
+  renderShop(shops[0]);
+}
+
+// ── Smart Insights ──
+function buildInsights(rows){
+  if(!rows.length)return;
+  const r0=rows[0];
+  const dtKey=getCol(r0,['Production DT','Net DT','DT (Min)','DT']);
+  const leKey=getCol(r0,['Line Efficiency','LineEff','LE']);
+  const prodKey=getCol(r0,['Actual Production','ActualProd']);
+  const dtValues=dtKey?rows.map(r=>gv(r,[dtKey])):[];
+  const leValues=leKey?rows.map(r=>{const v=gv(r,[leKey]);return v>1?v:v*100;}):[];
+  const avgDT=dtValues.reduce((a,b)=>a+b,0)/dtValues.length;
+  const avgLE=leValues.reduce((a,b)=>a+b,0)/leValues.length;
+  const highDTDays=dtValues.filter(v=>v>300).length;
+  const chips=[];
+  let mainText='Production data loaded. ';
+  if(avgLE>85)mainText+='Line efficiency is strong.';
+  else if(avgLE>70)mainText+='Line efficiency needs attention.';
+  else mainText+='Critical: line efficiency below target.';
+  document.getElementById('insights-text').textContent=mainText;
+  document.getElementById('insights-chips').innerHTML='';
+  document.getElementById('insights-bar').style.display='flex';
+}
+
+// ── Stat Strip (always uses FULL year dataset — never filtered) ──
+let fullDatasetRows=[];
+function buildStatStrip(rows, isFullDataset=false){
+  // Store full dataset once; ignore subsequent filtered calls
+  if(isFullDataset) fullDatasetRows=[...rows];
+  if(!fullDatasetRows.length) return;
+  const useRows=fullDatasetRows;
+  const dtKey=getCol(useRows[0],['Production DT','Net DT','DT (Min)','DT']);
+  const prodKey=getCol(useRows[0],['Actual Production','ActualProd','Production']);
+  const oeKey=getCol(useRows[0],['OE','OEE']);
+  const leKey=getCol(useRows[0],['Line Efficiency','LineEff','LE']);
+  const mttrKey=getCol(useRows[0],['MTTR']);
+  const mtbfKey=getCol(useRows[0],['MTBF']);
+  const upKey=getCol(useRows[0],['Uptime (Min)','Uptime']);
+  const grossDTKey=getCol(useRows[0],['Gross DT','GrossDT','Gross DT (Target)','GrossDT(Target)','Gross DT Target']);
+  const totalProd=useRows.reduce((s,r)=>s+gv(r,[prodKey||'x']),0);
+  const totalDT=useRows.reduce((s,r)=>s+gv(r,[dtKey||'x']),0);
+  const totalGrossDT=grossDTKey?useRows.reduce((s,r)=>s+gv(r,[grossDTKey]),0):0;
+  const totalUp=useRows.reduce((s,r)=>s+gv(r,[upKey||'x']),0);
+  const avgOE=useRows.reduce((s,r)=>s+gv(r,[oeKey||'x']),0)/useRows.length;
+  const avgLE=useRows.reduce((s,r)=>s+gv(r,[leKey||'x']),0)/useRows.length;
+  const totalMTTR=useRows.reduce((s,r)=>s+gv(r,[mttrKey||'x']),0);
+  const totalMTBF=useRows.reduce((s,r)=>s+gv(r,[mtbfKey||'x']),0);
+  const oeDisp=(avgOE>1?avgOE:avgOE*100).toFixed(2)+'%';
+  const leDisp=(avgLE>1?avgLE:avgLE*100).toFixed(2)+'%';
+  // Derive year range label
+  let yearLabel='Overall Year Summary';
+  if(globalDateKey){
+    const dates=useRows.map(r=>toDate(r[globalDateKey])).filter(Boolean).sort((a,b)=>a-b);
+    if(dates.length){
+      const y1=dates[0].getFullYear(), y2=dates[dates.length-1].getFullYear();
+      yearLabel = y1===y2 ? `Overall Year Summary — FY ${y1}` : `Overall Year Summary — ${y1}–${y2}`;
+    }
+  }
+  document.getElementById('stat-strip-year-label').textContent=yearLabel;
+  document.getElementById('stat-strip-header').style.display='flex';
+  const stats=[
+    {l:'Total Production',v:fmt(totalProd),sub:'units accumulated',cls:'col-text',accent:'info'},
+    {l:'Production DT',v:fmt(totalDT)+' min',sub:'production downtime (Col J)',cls:'col-red',accent:'danger'},
+    {l:'Gross DT',v:fmt(totalGrossDT)+' min',sub:'gross downtime (Col S)',cls:'col-amber',accent:'warn'},
+    {l:'Total Uptime',v:fmt(totalUp)+' min',sub:'available time',cls:'col-green',accent:'success'},
+    {l:'Avg OEE',v:oeDisp,sub:'overall equipment effectiveness',cls:avgOE*100>80?'col-green':avgOE*100>60?'col-amber':'col-red',accent:avgOE*100>80?'success':avgOE*100>60?'warn':'danger'},
+    {l:'Line Efficiency',v:leDisp,sub:'average line efficiency',cls:avgLE*100>80?'col-green':avgLE*100>60?'col-amber':'col-red',accent:avgLE*100>80?'success':'warn'},
+    {l:'Total MTTR',v:fmt(totalMTTR,2)+' min',sub:'cumulative mean time to repair',cls:'col-amber',accent:'warn'},
+    {l:'Total MTBF',v:fmt(totalMTBF,2)+' min',sub:'cumulative mean time between failures',cls:'col-blue',accent:'info'},
+  ];
+  document.getElementById('stat-strip').innerHTML=stats.map(s=>`
+    <div class="stat-cell ${s.accent}" title="${s.sub}">
+      <div class="sc-label">${s.l}</div>
+      <div class="sc-value ${s.cls}">${s.v}</div>
+      <div class="sc-sub">${s.sub}</div>
+    </div>`).join('');
+}
+
+// ── Shop Nav ──
+function buildShopNav(shops){
+  const el=document.getElementById('shop-nav');
+  el.innerHTML='<div style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace;white-space:nowrap;margin-right:4px;letter-spacing:.07em;text-transform:uppercase">Shop</div>';
+  shops.forEach((shop,i)=>{
+    const btn=document.createElement('button');
+    btn.className='shop-pill'+(i===0?' active':'');
+    btn.textContent=shop;
+    btn.onclick=()=>{document.querySelectorAll('.shop-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderShop(shop);};
+    el.appendChild(btn);
+  });
+}
+
+// ── Table View ──
+function buildTableView(rows){
+  if(!rows.length)return;
+  const cols=Object.keys(rows[0]);
+  const head=document.getElementById('tbl-head');
+  const sel=document.getElementById('tbl-col-filter');
+  head.innerHTML='<tr>'+cols.map((c,i)=>`<th onclick="sortTable(${i},'${c}')" data-col="${c}">${c}<span class="sort-arrow"></span></th>`).join('')+'</tr>';
+  sel.innerHTML='<option value="">All columns</option>'+cols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  tableFilteredRows=[...rows];
+  renderTableBody(tableFilteredRows);
+}
+function renderTableBody(rows){
+  const cols=Object.keys(tableRows[0]||{});
+  const dtKey=getCol(tableRows[0]||{},['Production DT','Net DT','DT']);
+  const leKey=getCol(tableRows[0]||{},['Line Efficiency','LineEff','LE']);
+  document.getElementById('tbl-body').innerHTML=rows.slice(0,500).map(row=>`<tr>${cols.map(c=>{
+    const v=row[c];
+    const raw=v instanceof Date?v.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):String(v||'');
+    const num=parseFloat(v);
+    if(c===dtKey&&!isNaN(num)){const cls=num>300?'pill-r':num>150?'pill-a':'pill-g';return `<td><span class="td-pill ${cls}">${fmt(num)}</span></td>`;}
+    if(c===leKey&&!isNaN(num)){const pct=num>1?num:num*100;const cls=pct>80?'pill-g':pct>60?'pill-a':'pill-r';return `<td><span class="td-pill ${cls}">${pct.toFixed(2)}%</span></td>`;}
+    if(!isNaN(num)&&raw!=='')return `<td class="td-num">${fmt(num,2)}</td>`;
+    return `<td>${raw}</td>`;
+  }).join('')}</tr>`).join('');
+  document.getElementById('tbl-count').textContent=`${rows.length.toLocaleString()} rows`;
+}
+function filterTable(){
+  const q=document.getElementById('tbl-search').value.toLowerCase();
+  const col=document.getElementById('tbl-col-filter').value;
+  tableFilteredRows=tableRows.filter(row=>{
+    if(col)return String(row[col]||'').toLowerCase().includes(q);
+    return Object.values(row).some(v=>String(v||'').toLowerCase().includes(q));
+  });
+  renderTableBody(tableFilteredRows);
+}
+function sortTable(idx,col){
+  const dir=sortState[col]===1?-1:1;
+  sortState={[col]:dir};
+  tableFilteredRows.sort((a,b)=>{const av=parseFloat(a[col])||String(a[col]||'');const bv=parseFloat(b[col])||String(b[col]||'');return av>bv?dir:av<bv?-dir:0;});
+  renderTableBody(tableFilteredRows);
+  document.querySelectorAll('thead th').forEach((th,i)=>{th.className=i===idx?(dir===1?'sort-asc':'sort-desc'):'';});
+}
+
+// ── Render Shop ──
+function renderShop(shop){
+  currentShop=shop;
+  destroyCharts();
+  const rows=allData[shop]||[];
+  if(!rows.length){
+    const fromEl=document.getElementById('fb-from').value;
+    const toEl=document.getElementById('fb-to').value;
+    const rangeNote=(fromEl&&toEl)?` (${fromEl} → ${toEl})`:'';
+    document.getElementById('main-content').innerHTML=`<div style="padding:48px 40px;text-align:center">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">${shop} — No data in selected range</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">No records found for <b>${shop}</b>${rangeNote}.<br>This shop may not have entries in this date window.<br><span style="color:var(--blue);cursor:pointer;font-weight:500" onclick="quickFilter(0,document.querySelector('.fb-qbtn:last-child'))">Click here to view All data →</span></div>
+    </div>`;
+    return;
+  }
+  const r0=rows[0];
+  const dateKey=getCol(r0,['Date','date']);
+  const prodKey=getCol(r0,['Actual Production','ActualProd']);
+  const dtKey=getCol(r0,['Production DT','Net DT','DT (Min)','DT']);
+  const oeKey=getCol(r0,['OE','OEE']);
+  const leKey=getCol(r0,['Line Efficiency','LineEff','LE']);
+  const upKey=getCol(r0,['Uptime (Min)','Uptime']);
+  const mttrKey=getCol(r0,['MTTR']);
+  const mtbfKey=getCol(r0,['MTBF']);
+  // BD reasons key: prefer columns named BD/Breakdown, but also auto-detect
+  // columns that contain text (not numbers) as they likely hold reason strings
+  let remarksKey=getCol(r0,[
+    'BD Reason','BD Reasons','BD_Reason','BDReason','BD Remark','BD Remarks',
+    'Breakdown Reason','Breakdown Remarks','Breakdown Remark',
+    'B/D Reason','B/D Remarks','B.D Reason','B.D Remarks',
+    'BD Occurrence','BD','B/D','B.D','Breakdown',
+    'Failure Reason','Failure Remark','Failure Mode','Failure',
+    'Remarks','Remark','Reason','Reasons','Comment','Comments','Observation',
+    'Root Cause','RootCause','Cause','Description'
+  ]);
+  const cycleKey=getCol(r0,['Cycle Time','CycleTime']);
+  const shiftKey=getCol(r0,['Shift','shift']);
+  const timeKey=getCol(r0,['Time (Min)','Time','Shift Time']);
+  const capKey=getCol(r0,['Capacity','capacity']);
+  const grossDTKey=getCol(r0,['Gross DT','GrossDT']);
+  // Column S = Gross DT (Target) — distinct from col J = Production DT (Min)
+  const grossDTTargetKey=getCol(r0,['Gross DT (Target)','GrossDT(Target)','Gross DT Target','GrossDTTarget',
+    'Gross DT(Target)','gross dt target','GROSS DT TARGET','GROSS DT (TARGET)',
+    'GDT Target','GDT(Target)','Gross Downtime Target','Gross DT-Target',
+    'Gross DT – Target','Gross DT - Target','Gross_DT_Target','GrossDT Target']);
+  // BD Time key — the actual breakdown duration field, distinct from Production DT
+  const bdKey=getCol(r0,[
+    'BD Time','BDTime','B/D Time','B.D Time','BD Time (Min)','BD Time(Min)',
+    'Breakdown Time','Breakdown Duration','BD Duration','BDDuration',
+    'BD DT','BD_Time','BD_DT','BD(Min)','BD (Min)',
+    'Breakdown Time (Min)','Breakdown DT','Breakdown DT (Min)'
+  ]);
+  // Auto-detect remarksKey fallback — runs after all other keys are known
+  // Excludes columns already mapped and columns with date-like values (e.g. "Apr'25")
+  // Scans ALL rows (not just first 20) so sparse BD columns are still detected
+  const _usedKeys=new Set([dateKey,prodKey,dtKey,oeKey,leKey,upKey,mttrKey,mtbfKey,cycleKey,shiftKey,timeKey,capKey,grossDTKey,grossDTTargetKey,bdKey].filter(Boolean));
+  const _dateLikePat=/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\s'\-]?\d{2,4}$/i;
+  if(!remarksKey){
+    const allKeys=Object.keys(r0);
+    let bestKey=null, bestScore=-1;
+    for(const k of allKeys){
+      if(_usedKeys.has(k)) continue;
+      const samples=rows.map(r=>String(r[k]||'').trim()).filter(v=>v&&v!=='-'&&v!=='0'&&v.toLowerCase()!=='nil'&&v.toLowerCase()!=='na');
+      if(!samples.length) continue;
+      const dateLikeCount=samples.filter(v=>_dateLikePat.test(v)).length;
+      if(dateLikeCount>samples.length*0.3) continue;
+      const textCount=samples.filter(v=>isNaN(parseFloat(v))&&v.length>2&&!_dateLikePat.test(v)).length;
+      // At least 1 meaningful text entry qualifies; pick the column with the most
+      if(textCount>=1&&textCount>bestScore){bestScore=textCount;bestKey=k;}
+    }
+    if(bestKey) remarksKey=bestKey;
+  }
+  // ── Smart x-axis grouping based on selected filter range ──
+  // "All" (no date filter) OR full-year range  → group by MONTH  → Jan, Feb, Mar …
+  // Any specific range (7D / 30D / 90D / custom) → group by DAY   → 1 Jun, 2 Jun …
+  function buildTrendData(rows, dateKey){
+    const dates=rows.map(r=>toDate(r[dateKey]));
+    const validDates=dates.filter(Boolean);
+    if(!validDates.length) return {labels:rows.map((_,i)=>String(i+1)), groups:rows.map(r=>[r])};
+
+    // isAllView = no active date filter (user clicked "All" or never filtered)
+    const isAllView = !dateFrom && !dateTo;
+
+    let labels=[], groups=[];
+
+    if(isAllView){
+      // ── YEAR VIEW: group by month, label = "Jan", "Feb" … ──
+      const monthMap={};
+      rows.forEach((r,i)=>{
+        const d=dates[i]; if(!d) return;
+        const k=d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0');
+        if(!monthMap[k]) monthMap[k]=[];
+        monthMap[k].push(r);
+      });
+      Object.keys(monthMap).sort().forEach(k=>{
+        const [y,m]=k.split('-');
+        // Show "Jan", "Feb" … "Dec" — add year suffix only when data spans multiple years
+        const spanYears=[...new Set(Object.keys(monthMap).map(k=>k.split('-')[0]))].length>1;
+        const lbl=new Date(+y,+m-1,1).toLocaleDateString('en-IN',
+          spanYears ? {month:'short',year:'2-digit'} : {month:'short'});
+        labels.push(lbl);
+        groups.push(monthMap[k]);
+      });
+    } else {
+      // ── RANGE VIEW: group by day, label = "1 Jun", "2 Jun" … ──
+      const dayMap={};
+      rows.forEach((r,i)=>{
+        const d=dates[i]; if(!d) return;
+        // key as local YYYY-MM-DD to avoid UTC midnight shift
+        const k=d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+        if(!dayMap[k]) dayMap[k]=[];
+        dayMap[k].push(r);
+      });
+      Object.keys(dayMap).sort().forEach(k=>{
+        const [y,m,dd]=k.split('-');
+        // "1 Jun", "15 Jun" — clean day-first format
+        const lbl=new Date(+y,+m-1,+dd).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+        labels.push(lbl);
+        groups.push(dayMap[k]);
+      });
+
+      // If only a single unique day in range, still render that one point
+      if(!labels.length){
+        const d=validDates[0];
+        labels=[d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})];
+        groups=[rows];
+      }
+    }
+    return {labels, groups};
+  }
+  const {labels:trendLabels, groups:trendGroups}=buildTrendData(rows, dateKey);
+  const labels=trendLabels;
+  function aggAvg(grps,key){return grps.map(g=>g.reduce((s,r)=>s+gv(r,[key||'x']),0)/g.length);}
+  function aggSum(grps,key){return grps.map(g=>g.reduce((s,r)=>s+gv(r,[key||'x']),0));}
+  const totalProd=rows.reduce((s,r)=>s+gv(r,[prodKey||'x']),0);
+  const totalDT=rows.reduce((s,r)=>s+gv(r,[dtKey||'x']),0);
+  const totalGrossDT=grossDTTargetKey?rows.reduce((s,r)=>s+gv(r,[grossDTTargetKey]),0):0;
+  const avgLE=rows.reduce((s,r)=>s+gv(r,[leKey||'x']),0)/rows.length;
+  const avgOE=rows.reduce((s,r)=>s+gv(r,[oeKey||'x']),0)/rows.length;
+  const totalMTTR=rows.reduce((s,r)=>s+gv(r,[mttrKey||'x']),0);
+  const totalMTBF=rows.reduce((s,r)=>s+gv(r,[mtbfKey||'x']),0);
+  const avgProd=totalProd/rows.length;
+  const prodPlan=capKey?gv(r0,[capKey]):1042;
+  const cycleTime=cycleKey?gv(r0,[cycleKey]):74;
+  const shifts=shiftKey?gv(r0,[shiftKey]):3;
+  const shiftTime=timeKey?gv(r0,[timeKey]):1285;
+  const effTarget=92;
+  const leDisp=avgLE>1?avgLE:avgLE*100;
+  const oeDisp=avgOE>1?avgOE:avgOE*100;
+  // Chart series — aggregated by trendGroups
+  const effData=leKey?aggAvg(trendGroups,leKey).map(v=>v>1?v:v*100):[];
+  const oeeData=oeKey?aggAvg(trendGroups,oeKey).map(v=>v>1?v:v*100):[];
+  const prodData=prodKey?aggSum(trendGroups,prodKey):[];
+  const grossDT=grossDTKey?aggSum(trendGroups,grossDTKey):dtKey?aggSum(trendGroups,dtKey):[];
+  const dtData=dtKey?aggSum(trendGroups,dtKey):[];
+  // Col J = Production DT (Min) bars, Col S = Gross DT (Target) dashed line
+  const prodDTData=dtKey?aggSum(trendGroups,dtKey):[];
+  const grossDTTargetData=grossDTTargetKey?aggSum(trendGroups,grossDTTargetKey):[];
+  const grossDTTargetValue=grossDTTargetKey?gv(r0,[grossDTTargetKey]):0;
+  const LOSS_CATS=[
+    {name:'M.Short',pct:.38,color:'#ef4444',colKeys:['M.Short','MShort','Material Short','Mat Short']},
+    {name:'BiW',pct:.24,color:'#f59e0b',colKeys:['BiW','Body in White','BIW']},
+    {name:'B/D',pct:.20,color:'#f97316',colKeys:['B/D','BD','Breakdown','B.D']},
+    {name:'Eng',pct:.10,color:'#8b5cf6',colKeys:['Eng','Engineering','Engg']},
+    {name:'Paint',pct:.08,color:'#06b6d4',colKeys:['Paint']},
+    {name:'IPMS',pct:.07,color:'#1a56db',colKeys:['IPMS']},
+    {name:'TS',pct:.06,color:'#10b981',colKeys:['TS','Tool Shop','Toolshop']},
+    {name:'Qlty',pct:.05,color:'#6366f1',colKeys:['Qlty','Quality','Qly']},
+    {name:'Proc',pct:.04,color:'#ec4899',colKeys:['Proc','Process']},
+    {name:'Others',pct:.03,color:'#64748b',colKeys:['Others','Other']},
+    {name:'Logistics',pct:0,color:'#334155',colKeys:['Logistics','Logistic']},
+    {name:'Part Qty',pct:0,color:'#334155',colKeys:['Part Qty','PartQty','Part Quantity']},
+  ];
+  const totalLoss=totalDT;
+  // Detect actual loss columns and compute top-material text for each category
+  const lossData=LOSS_CATS.map(c=>{
+    const actualKey=getCol(r0,c.colKeys);
+    let val=0, topMaterial='';
+    if(actualKey){
+      val=rows.reduce((s,r)=>s+gv(r,[actualKey]),0);
+      if(val>0){
+        // Find row with highest value for this category
+        const maxRow=[...rows].sort((a,b)=>gv(b,[actualKey])-gv(a,[actualKey]))[0];
+        if(maxRow){
+          // Look for a sub-material/reason column adjacent to this loss column
+          const keys=Object.keys(maxRow);
+          const colIdx=keys.indexOf(actualKey);
+          // Check the column immediately after as it often contains the reason/material name
+          const nextKey=colIdx>=0&&colIdx<keys.length-1?keys[colIdx+1]:null;
+          const nextVal=nextKey?String(maxRow[nextKey]||'').trim():'';
+          if(nextVal&&nextVal!=='0'&&isNaN(parseFloat(nextVal))){
+            topMaterial=nextVal.substring(0,16);
+          } else {
+            // Try generic name columns
+            const matKey=getCol(maxRow,['Material','Mat','Part','Component','Reason','Sub Reason','Description','Name']);
+            if(matKey&&String(maxRow[matKey]||'').trim()) topMaterial=String(maxRow[matKey]).trim().substring(0,16);
+            else topMaterial=fmtDate(maxRow[dateKey]); // fallback: date of worst day
+          }
+        }
+      }
+    } else {
+      val=Math.round(totalLoss*c.pct);
+    }
+    return {...c,val,topMaterial};
+  });
+  // Sort loss data descending by value
+  lossData.sort((a,b)=>b.val-a.val);
+  const maxLoss=Math.max(...lossData.map(l=>l.val),1);
+  const highDT=[...rows].sort((a,b)=>gv(b,[dtKey||'x'])-gv(a,[dtKey||'x'])).slice(0,5);
+  const shopId=shop.replace(/[^a-z0-9]/gi,'_');
+
+  // Trend arrows for LE
+  const midPoint=Math.floor(rows.length/2);
+  const leFirst=rows.slice(0,midPoint).reduce((s,r)=>s+gv(r,[leKey||'x']),0)/midPoint;
+  const leSecond=rows.slice(midPoint).reduce((s,r)=>s+gv(r,[leKey||'x']),0)/(rows.length-midPoint);
+  const leFirst_=leFirst>1?leFirst:leFirst*100;
+  const leSecond_=leSecond>1?leSecond:leSecond*100;
+  const leTrend=leSecond_>leFirst_?'↑ Improving':'↓ Declining';
+  const leTrendCls=leSecond_>leFirst_?'up':'down';
+
+  document.getElementById('main-content').innerHTML=`
+  <div class="main-grid fade-up">
+
+    <!-- LEFT: SHOP INFO -->
+    <div class="panel fade-up fade-up-1">
+      <div class="panel-head">
+        <div class="panel-title"><div class="panel-dot" style="background:var(--tata)"></div>Shop Info</div>
+      </div>
+      <div class="panel-body">
+        <div class="shop-badge"><div class="shop-badge-dot"></div><div class="shop-badge-text">${shop}</div></div>
+        <div class="info-grid">
+          <div class="ig-row"><span class="ig-k">Cycle Time</span><span class="ig-v blue">${fmt(cycleTime)} sec</span></div>
+          <div class="ig-row"><span class="ig-k">Shifts</span><span class="ig-v">${shifts%1===0?shifts:shifts.toFixed(1)}</span></div>
+          <div class="ig-row"><span class="ig-k">Capacity</span><span class="ig-v">${fmt(prodPlan)}</span></div>
+          <div class="ig-row"><span class="ig-k">Shift Time</span><span class="ig-v">${fmt(shiftTime)} min</span></div>
+          <div class="ig-row"><span class="ig-k">Production DT</span><span class="ig-v red">${fmt(totalDT)} min</span></div>
+          ${grossDTTargetKey?`<div class="ig-row"><span class="ig-k">Gross DT (Target)</span><span class="ig-v amber">${fmt(totalGrossDT)} min</span></div>`:''}
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-block" data-tip="Overall Equipment Effectiveness">
+            <div class="kpi-label">OEE</div>
+            <div class="kpi-val" style="color:${oeDisp>80?'var(--green)':oeDisp>60?'var(--amber)':'var(--red)'}">${oeDisp.toFixed(2)}%</div>
+            <div class="kpi-bar"><div class="kpi-fill" id="kpi-oe-${shopId}" style="width:0%;background:${oeDisp>80?'var(--green)':oeDisp>60?'var(--amber)':'var(--red)'}"></div></div>
+          </div>
+          <div class="kpi-block" data-tip="Line Efficiency — Target: ${effTarget}%">
+            <div class="kpi-label">Line Eff</div>
+            <div class="kpi-val" style="color:${leDisp>80?'var(--green)':leDisp>60?'var(--amber)':'var(--red)'}">${leDisp.toFixed(2)}%</div>
+            <div class="kpi-bar"><div class="kpi-fill" id="kpi-le-${shopId}" style="width:0%;background:${leDisp>80?'var(--green)':leDisp>60?'var(--amber)':'var(--red)'}"></div></div>
+            <div class="sc-trend ${leTrendCls}" style="font-size:9px;margin-top:4px">${leTrend}</div>
+          </div>
+          <div class="kpi-block" data-tip="Total MTTR (cumulative sum)">
+            <div class="kpi-label">MTTR (Total)</div>
+            <div class="kpi-val" style="color:var(--amber)">${fmt(totalMTTR,2)}</div>
+            <div class="kpi-label" style="margin-top:2px">min</div>
+          </div>
+          <div class="kpi-block" data-tip="Total MTBF (cumulative sum)">
+            <div class="kpi-label">MTBF (Total)</div>
+            <div class="kpi-val" style="color:var(--cyan)">${fmt(totalMTBF,2)}</div>
+            <div class="kpi-label" style="margin-top:2px">min</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CENTRE: TREND -->
+    <div class="panel fade-up fade-up-2">
+      <div class="panel-head">
+        <div class="panel-title"><div class="panel-dot" style="background:var(--amber)"></div>Efficiency & Production Trend</div>
+        <div class="panel-actions">
+          <button class="p-btn active" onclick="toggleDataset('${shopId}',0,this)">Line Eff</button>
+          <button class="p-btn active" onclick="toggleDataset('${shopId}',1,this)">OEE</button>
+          <button class="p-btn active" onclick="toggleDataset('${shopId}',2,this)">Gross DT</button>
+          <button class="p-btn active" onclick="toggleDataset('${shopId}',3,this)">Prod</button>
+          <button class="trend-expand-btn" onclick="openTrendFullscreen('${shopId}')" title="Expand to fullscreen">
+            <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            Expand
+          </button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="target-badge" style="margin-bottom:0">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Target: ${effTarget}%
+            </div>
+            ${grossDTTargetKey?`<div style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:5px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);font-size:10px;color:#f97316;font-weight:600;white-space:nowrap;line-height:1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Gross DT Target: ${fmt(grossDTTargetValue)} min
+            </div>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${rows.length} data points</div>
+        </div>
+        <div class="chart-legend-row" id="leg-${shopId}">
+          <div class="cl-item" onclick="toggleDataset('${shopId}',0,this)" data-idx="0"><div class="cl-swatch" style="background:#f59e0b"></div>Line Efficiency Trend</div>
+          <div class="cl-item" onclick="toggleDataset('${shopId}',1,this)" data-idx="1"><div class="cl-swatch" style="background:#3b82f6"></div>OEE Trend</div>
+          <div class="cl-item" onclick="toggleDataset('${shopId}',2,this)" data-idx="2"><div class="cl-swatch" style="background:#ef4444;height:10px;width:12px;border-radius:2px"></div>Gross DT (Min)</div>
+          <div class="cl-item" onclick="toggleDataset('${shopId}',3,this)" data-idx="3"><div class="cl-swatch" style="background:#10b981"></div>Production</div>
+        </div>
+        <div class="chart-wrap" style="height:255px">
+          <canvas id="eff-${shopId}" role="img" aria-label="Efficiency trend chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRE-RIGHT: LOSSES -->
+    <div class="panel fade-up fade-up-3">
+      <div class="panel-head">
+        <div class="panel-title"><div class="panel-dot" style="background:var(--red)"></div>Cumulative Losses (min)</div>
+        <div class="panel-actions">
+          <button class="p-btn active" id="loss-toggle-${shopId}" onclick="toggleLossView('${shopId}')">Bar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="loss-bars-${shopId}" class="loss-list">
+          ${lossData.map((l,i)=>`
+          <div class="loss-row${i===0?' loss-row-top':''}">
+            <div class="loss-name-wrap">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div class="loss-name">${l.name}</div>
+                ${i===0?`<div class="loss-top-badge">TOP</div>`:''}
+              </div>
+              ${l.topMaterial?`<div class="loss-material-tag" title="${l.topMaterial}">${l.topMaterial.length>14?l.topMaterial.substring(0,14)+'…':l.topMaterial}</div>`:''}
+            </div>
+            <div class="loss-track">
+              <div class="loss-fill" id="lf-${shopId}-${l.name.replace(/\W/g,'')}" data-target="${l.val>0?Math.round(l.val/maxLoss*100):0}" style="width:0%;background:${l.color};min-width:${l.val>0?'2px':'0'}">${l.val>200?fmt(l.val):''}</div>
+            </div>
+            <div class="loss-val">${l.val>0?fmt(l.val):'—'}</div>
+          </div>`).join('')}
+        </div>
+        <div id="loss-chart-wrap-${shopId}" style="display:none;height:260px">
+          <canvas id="loss-chart-${shopId}" role="img" aria-label="Loss chart"></canvas>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Daily DT — Last 10 Days</div>
+          <div class="chart-wrap" style="height:120px">
+            <canvas id="daily-${shopId}" role="img" aria-label="Daily downtime"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: BD SUMMARY -->
+    <div class="panel fade-up fade-up-4">
+      <div class="panel-head">
+        <div class="panel-title"><div class="panel-dot" style="background:var(--purple)"></div>BD Summary</div>
+      </div>
+      <div class="panel-body" style="padding:10px 12px">
+        ${(()=>{const bdResult=buildRemarks(rows,dateKey,dtKey,remarksKey,bdKey);const totalBDTime=bdResult.totalTime||0;return `<div class="bd-total-strip">
+          <div class="bd-total-label">Total BD Time</div>
+          <div><span class="bd-total-value">${(+totalBDTime.toFixed(2)).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="bd-total-unit">min</span></div>
+        </div>
+        <div class="remark-scroll" id="remarks-${shopId}">${bdResult.html||''}</div>`})()}
+      </div>
+    </div>
+
+  </div>`;
+
+  // ── Animate KPI bars ──
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      const oe=document.getElementById('kpi-oe-'+shopId);
+      const le=document.getElementById('kpi-le-'+shopId);
+      if(oe)oe.style.width=Math.min(oeDisp,100)+'%';
+      if(le)le.style.width=Math.min(leDisp,100)+'%';
+    },250);
+    lossData.forEach(l=>{
+      const el=document.getElementById('lf-'+shopId+'-'+l.name.replace(/\W/g,''));
+      if(el)setTimeout(()=>{el.style.width=(l.val>0?Math.round(l.val/maxLoss*100):0)+'%';},350);
+    });
+  });
+
+  requestAnimationFrame(()=>renderCharts(shopId,labels,effData,oeeData,prodDTData,grossDTTargetData,prodData,dtData,rows,dateKey,dtKey,lossData,effTarget));
+
+  // Store trend data for fullscreen reuse
+  window._trendData = window._trendData || {};
+  window._trendData[shopId] = {
+    shop, labels, effData, oeeData, prodDTData, grossDTTargetData, prodData,
+    effTarget, grossDTTargetKey, grossDTTargetValue:grossDTTargetKey?grossDTTargetValue:0,
+    rowCount:rows.length, leDisp, oeDisp
+  };
+}
+
+function renderCharts(shopId,labels,effData,oeeData,prodDTData,grossDTTargetData,prodData,dtData,rows,dateKey,dtKey,lossData,effTarget){
+  const commonTooltip={
+    backgroundColor:'#0d1829',borderColor:'rgba(26,86,219,.25)',borderWidth:1,
+    titleColor:'#e2e8f0',bodyColor:'#7a9ab8',padding:12,cornerRadius:8,
+    bodyFont:{family:'DM Mono',size:11},titleFont:{family:'DM Mono',size:11,weight:'600'}
+  };
+
+  // 1. Efficiency trend — mixed chart: lines + Gross DT bar columns
+  const effCtx=document.getElementById('eff-'+shopId);
+  if(effCtx){
+    const inst=new Chart(effCtx,{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'Line Efficiency Trend',data:effData,type:'line',borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.07)',borderWidth:2,pointRadius:3,pointHoverRadius:6,tension:.4,yAxisID:'y',fill:true,order:1,
+          datalabels:{display:true,align:'top',anchor:'end',color:'#b45309',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(2)+'%',padding:{bottom:2}}},
+        {label:'OEE Trend',data:oeeData,type:'line',borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.06)',borderWidth:2,pointRadius:3,pointHoverRadius:6,tension:.4,yAxisID:'y',fill:true,order:1,
+          datalabels:{display:true,align:'bottom',anchor:'end',color:'#1d4ed8',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(2)+'%',padding:{top:2}}},
+        {label:'Gross DT (Min)',data:prodDTData,type:'bar',backgroundColor:'rgba(239,68,68,.55)',borderColor:'#ef4444',borderWidth:1,borderRadius:3,yAxisID:'y2',order:2,
+          datalabels:{display:'auto',anchor:'end',align:'end',color:'#dc2626',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN')}},
+        {label:'Production',data:prodData,type:'line',borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.05)',borderWidth:1.5,pointRadius:3,pointHoverRadius:5,tension:.4,yAxisID:'y2',order:1,
+          datalabels:{display:true,align:'top',anchor:'end',color:'#059669',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN'),padding:{bottom:2}}},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{...commonTooltip},
+          datalabels:{clip:false},
+        },
+        layout:{padding:{top:18,right:10}},
+        scales:{
+          x:{grid:{color:'rgba(0,0,0,.03)'},ticks:{color:'#64748b',font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:15},border:{color:'var(--border)'}},
+          y:{grid:{color:'rgba(0,0,0,.03)'},ticks:{color:'#64748b',font:{size:9,family:'DM Mono'},callback:v=>v+'%'},border:{color:'var(--border)'},min:0,max:115,position:'left'},
+          y2:{grid:{display:false},ticks:{color:'#64748b',font:{size:9,family:'DM Mono'},callback:v=>v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN')},border:{color:'var(--border)'},position:'right'},
+        }
+      }
+    });
+    chartInst.push(inst);
+    window['chart_eff_'+shopId]=inst;
+  }
+
+  // 2. Loss chart
+  const lossCtx=document.getElementById('loss-chart-'+shopId);
+  if(lossCtx){
+    const sorted=[...lossData].sort((a,b)=>b.val-a.val);
+    const inst=new Chart(lossCtx,{
+      type:'bar',
+      data:{labels:sorted.map(l=>l.name),datasets:[{label:'Loss (min)',data:sorted.map(l=>l.val),backgroundColor:sorted.map(l=>l.color+'cc'),borderRadius:4,borderSkipped:false,datalabels:{display:false}}]},
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{...commonTooltip,callbacks:{label:ctx=>` ${(+ctx.raw.toFixed(2)).toLocaleString('en-IN')} min`}},datalabels:{display:false}},
+        scales:{
+          x:{grid:{color:'rgba(0,0,0,.03)'},ticks:{color:'#64748b',font:{size:9,family:'DM Mono'}},border:{color:'var(--border)'}},
+          y:{grid:{display:false},ticks:{color:'#64748b',font:{size:10}},border:{color:'var(--border)'}},
+        }
+      }
+    });
+    chartInst.push(inst);
+    window['chart_loss_'+shopId]=inst;
+  }
+
+  // 3. Daily DT mini bar
+  const daily10=rows.slice(-10);
+  const dailyCtx=document.getElementById('daily-'+shopId);
+  if(dailyCtx&&daily10.length){
+    const dvals=daily10.map(r=>gv(r,[dtKey||'x']));
+    const dlabels=daily10.map(r=>fmtDate(r[dateKey]));
+    const dcolors=dvals.map(v=>v>300?'#ef4444':v>150?'#f59e0b':'#1a56db');
+    const inst=new Chart(dailyCtx,{
+      type:'bar',
+      data:{labels:dlabels,datasets:[{
+        label:'DT (min)',
+        data:dvals,
+        backgroundColor:dcolors,
+        borderRadius:4,
+        borderSkipped:false,
+        datalabels:{
+          display:true,
+          anchor:'end',
+          align:'end',
+          offset:2,
+          color:dcolors,
+          font:{size:8,family:'DM Mono',weight:'700'},
+          formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN'),
+          clamp:true
+        }
+      }]},
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        layout:{padding:{top:22}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{...commonTooltip,callbacks:{label:ctx=>` ${(+ctx.raw.toFixed(2)).toLocaleString('en-IN')} min DT`}},
+          datalabels:{clip:false}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#64748b',font:{size:9},maxRotation:45},border:{color:'var(--border)'}},
+          y:{display:false},
+        }
+      }
+    });
+    chartInst.push(inst);
+  }
+}
+
+function toggleDataset(shopId,idx,btn){
+  const chart=window['chart_eff_'+shopId];
+  if(!chart)return;
+  const ds=chart.data.datasets[idx];
+  const hidden=!ds.hidden;
+  ds.hidden=hidden;
+  chart.update();
+  btn.classList.toggle('active',!hidden);
+  const legItems=document.querySelectorAll(`#leg-${shopId} .cl-item`);
+  if(legItems[idx])legItems[idx].classList.toggle('hidden',hidden);
+}
+function toggleLossView(shopId){
+  const barsEl=document.getElementById('loss-bars-'+shopId);
+  const chartEl=document.getElementById('loss-chart-wrap-'+shopId);
+  const btn=document.getElementById('loss-toggle-'+shopId);
+  const showingChart=chartEl.style.display!=='none';
+  barsEl.style.display=showingChart?'flex':'none';
+  chartEl.style.display=showingChart?'none':'block';
+  btn.textContent=showingChart?'Bar':'List';
+  btn.classList.toggle('active',!showingChart);
+  if(!showingChart){const c=window['chart_loss_'+shopId];if(c)c.update();}
+}
+// ── BD ignore map: headings to strip per shop ──
+const BD_IGNORE_MAP = {
+  "TCF-1": [
+    "Agency losses",
+    "Major Breakdown"
+  ],
+  "X4-BIW": [
+    "Equipment Breakdown DT",
+    "Fixture maintenance",
+    "Details"
+  ],
+  "TCF-2": [
+    "A shift",
+    "B shift",
+    "C shift",
+    "IPMS A shift",
+    "IPMS B shift",
+    "IPMS C shift"
+  ],
+  "Q5-BIW": [
+    "Process Losses",
+    "Equipment's Major Breakdown",
+    "Fixture Maintenance Major Breakdown",
+    "No Major Breakdown",
+    "No major breakdown Process Losses"
+  ],
+  "Nova": [
+    "Mgt and Fixture issues",
+    "Major breakdown"
+  ],
+  "Engine": [
+    "Machine shop"
+  ],
+  "TA65": [
+    "TA78",
+    "TA"
+  ]
+};
+
+// Returns the ignore list for the active shop by fuzzy-matching the shop name
+// against every key in BD_IGNORE_MAP (handles "TCF-1 ", "tcf1", "TCF 1" etc.)
+function getBDIgnoreList(shopName){
+  const s = shopName.trim().toLowerCase().replace(/[\s\-_]/g,'');
+  // Pass 1: exact match (most reliable)
+  for(const key of Object.keys(BD_IGNORE_MAP)){
+    const k = key.trim().toLowerCase().replace(/[\s\-_]/g,'');
+    if(s === k) return BD_IGNORE_MAP[key];
+  }
+  // Pass 2: substring match only when key is at least 3 chars and
+  // the shorter string is a clear prefix/suffix of the longer one
+  for(const key of Object.keys(BD_IGNORE_MAP)){
+    const k = key.trim().toLowerCase().replace(/[\s\-_]/g,'');
+    if(k.length >= 3 && (s.includes(k) || k.includes(s))){
+      return BD_IGNORE_MAP[key];
+    }
+  }
+  return [];
+}
+
+// Normalize a raw BD reason token before comparison:
+// strips surrounding symbols (* • - → : etc.), collapses whitespace, lowercases.
+function normalizeBDReason(s){
+  return (s||'').toString()
+    .trim()
+    .replace(/^[^a-zA-Z0-9\']+|[^a-zA-Z0-9\']+$/g,'')
+    .replace(/\s+/g,' ')
+    .trim()
+    .toLowerCase();
+}
+
+function shouldIgnoreBD(ignoreList, reason){
+  if(!ignoreList.length) return false;
+  const r = normalizeBDReason(reason);
+  return ignoreList.some(x => r === normalizeBDReason(x));
+}
+
+function buildRemarks(rows,dateKey,dtKey,remarksKey,bdKey){
+  const shopName=(currentShop||'').trim();
+  const _ignoreList=getBDIgnoreList(shopName);
+  const _dateLike=/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[\s'\-]?\d{2,4}$/i;
+
+  function stripTime(s){
+    return s
+      .replace(/[\s\u2013\u2014\u2012\-_.@=([\[]+\d+(\.\d+)?\s*min(utes?)?s?.*$/i, '')
+      .replace(/[\s\u2013\u2014\u2012\-_.@=([\[]+\d+(\.\d+)?\s*hr(s|ours?)?.*$/i, '')
+      .replace(/[\s\u2013\u2014\u2012\-_.@=([\[]+\d+(\.\d+)?\s*$/i, '')
+      .trim();
+  }
+
+  function isIgnoredHeader(line){
+    if(!_ignoreList.length) return false;
+    const stripped = normalizeBDReason(stripTime(line));
+    return _ignoreList.some(x => stripped === normalizeBDReason(x));
+  }
+
+  // Extracts the numeric minute value embedded in a reason string.
+  // e.g. "Trim#3 unload lift fault -9 min (C shift)" → 9
+  //      "Balancing machine breakdown - 16 min"       → 16
+  //      "TO6 raise lift fault -4'"                   → 4
+  // Returns 0 if no inline time is found.
+  function extractInlineMinutes(raw){
+    // Match patterns like: -9 min, - 16 min, -4', – 5, = 8 min, 8min, (8 min)
+    const m = raw.match(/[\s\u2013\u2014\u2012\-_.@=([\[]+(\d+(?:\.\d+)?)\s*(?:min(?:utes?)?s?|'|mins?)?\s*(?:\(|$)/i)
+               || raw.match(/[\s\u2013\u2014\u2012\-_.@=([\[]+(\d+(?:\.\d+)?)\s*(?:min(?:utes?)?s?|')\s*/i)
+               || raw.match(/[\s\u2013\u2014\u2012\-_.@=([\[]+(\d+(?:\.\d+)?)\s*$/);
+    if(m) return parseFloat(m[1])||0;
+    return 0;
+  }
+
+  function extractReasons(r,key){
+    if(!key) return [];
+    const val=String(r[key]||'').trim();
+    if(!val||val==='-'||val==='0'||val.toLowerCase()==='nil'||val.toLowerCase()==='no'||val==='NA') return [];
+    if(_dateLike.test(val)) return [];
+    if(shouldIgnoreBD(_ignoreList, val)) return [];
+    const lines = val.split(/\n/);
+    // Returns array of {raw, inlineMin} objects — raw is the original unsanitised token
+    const tokens = [];
+    lines.forEach(line=>{
+      line = line.trim();
+      if(!line) return;
+      if(isIgnoredHeader(line)) return;
+      line.split(/[,;|]+/).forEach(part=>{
+        part = part.trim();
+        if(!part) return;
+        part = part.replace(/^[\s]*[\(\[]?\d+[\)\].:]\s*/, '').trim(); // strip leading numbering "1."
+        if(!part||part.length<=1||!isNaN(parseFloat(part))||_dateLike.test(part)) return;
+        if(shouldIgnoreBD(_ignoreList, part)) return;
+        tokens.push(part);  // keep raw (with inline time) for minute extraction
+      });
+    });
+    return tokens;
+  }
+
+  // Build reason → array of {date, dtVal} map
+  const reasonEntries={};  // reason → [{date, dtVal}]
+  let usedKey=remarksKey;
+
+  function buildMap(key,targetMap){
+    rows.forEach(r=>{
+      const rawTokens=extractReasons(r,key);
+      if(!rawTokens.length) return;
+
+      // Try to read a dedicated BD Time column value for this row
+      const rowBDColVal = bdKey ? gv(r,[bdKey]) : 0;
+
+      // Check if ANY token in this row has an inline minute value
+      const inlineMins = rawTokens.map(t => extractInlineMinutes(t));
+      const hasInline  = inlineMins.some(v => v > 0);
+      const inlineSum  = inlineMins.reduce((a,b)=>a+b, 0);
+
+      // Decide the per-row time source:
+      //   1. Dedicated BD column (bdKey) if it has a value
+      //   2. Sum of inline minutes from the reason text
+      //   3. Production DT column (dtKey) as last resort
+      const rowTimeSource =
+        rowBDColVal > 0 ? 'col'    :
+        hasInline        ? 'inline' : 'dt';
+
+      rawTokens.forEach((rawReason, idx)=>{
+        // Clean the reason label (strip trailing time/numbers for display)
+        let reason = rawReason
+          .replace(/[\s\u2013\u2014\u2012\-_.@=(\[\(]+\d+(\.\d+)?\s*min(utes?)?s?.*$/i, '')
+          .replace(/[\s\u2013\u2014\u2012\-_.@=(\[\(]+\d+(\.\d+)?\s*hr(s|ours?)?.*$/i, '')
+          .replace(/[\s\u2013\u2014\u2012\-_.@=(\[\(]+\d+(\.\d+)?\s*'?\s*(?:\(.*)?$/i, '')
+          .replace(/^[^a-zA-Z0-9\']+|[^a-zA-Z0-9\']+$/g,'')
+          .replace(/\s+/g,' ')
+          .trim();
+        if(shopName.trim().toUpperCase() === 'TA65'){
+          reason = reason.replace(/^TA65\s*/i, '').trim();
+        }
+        if(!reason) return;
+        if(!targetMap[reason]) targetMap[reason]=[];
+
+        const d=r[dateKey];
+        const label=d instanceof Date
+          ? d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
+          : fmtDate(d);
+
+        // Per-entry dtVal:
+        //   col source    → divide the column value evenly across entries in this row
+        //   inline source → use this token's own inline minutes
+        //   dt fallback   → divide the Production DT evenly across entries
+        let dtVal = 0;
+        if(rowTimeSource === 'col'){
+          dtVal = rawTokens.length > 0 ? rowBDColVal / rawTokens.length : rowBDColVal;
+        } else if(rowTimeSource === 'inline'){
+          dtVal = inlineMins[idx] || 0;
+        } else {
+          const rowDT = dtKey ? gv(r,[dtKey]) : 0;
+          dtVal = rawTokens.length > 0 ? rowDT / rawTokens.length : rowDT;
+        }
+
+        targetMap[reason].push({date:label, dtVal});
+      });
+    });
+  }
+
+  if(usedKey) buildMap(usedKey,reasonEntries);
+
+  // Auto-detect fallback
+  if(!Object.keys(reasonEntries).length){
+    const allKeys=Object.keys(rows[0]||{});
+    let bestKey=null, bestScore=-1;
+    for(const k of allKeys){
+      if(k===dateKey) continue;
+      const sampleVals=rows.map(r=>String(r[k]||'').trim()).filter(v=>v&&v!=='-'&&v!=='0'&&v.toLowerCase()!=='nil'&&v.toLowerCase()!=='na');
+      if(!sampleVals.length) continue;
+      const dateLikeCount=sampleVals.filter(v=>_dateLike.test(v)).length;
+      if(dateLikeCount>sampleVals.length*0.3) continue;
+      const tmp={};
+      buildMap(k,tmp);
+      const meaningful=Object.keys(tmp).filter(e=>isNaN(parseFloat(e))&&e.length>2&&!_dateLike.test(e));
+      if(meaningful.length>bestScore){bestScore=meaningful.length;bestKey=k;}
+    }
+    if(bestKey){buildMap(bestKey,reasonEntries);usedKey=bestKey;}
+  }
+
+  // Fallback: high-DT days
+  if(!Object.keys(reasonEntries).length){
+    const timeKey=bdKey||dtKey||'x';
+    const highDT=[...rows].sort((a,b)=>gv(b,[timeKey])-gv(a,[timeKey])).slice(0,5);
+    let html=`<div class="remark-section-header normal">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      High-DT Days
+    </div>`;
+    const totalTime=highDT.reduce((s,r)=>s+gv(r,[timeKey]),0);
+    html+=highDT.map(r=>{
+      const dt=gv(r,[timeKey]);
+      const cls=dt>300?'rdt-high':dt>100?'rdt-med':'rdt-low';
+      const label=bdKey?'BD time':'Production downtime';
+      return `<div class="remark-card"><div class="remark-row"><span>${fmtDate(r[dateKey])}</span><span class="remark-dt-badge ${cls}">${fmt(dt)} min</span></div><div class="remark-text" style="margin-top:3px">${label}: ${fmt(dt)} min recorded.</div></div>`;
+    }).join('');
+    return {html, totalTime};
+  }
+
+  // Clean + sort by frequency
+  const clean={};
+  Object.entries(reasonEntries).forEach(([k,entries])=>{
+    if(!isNaN(parseFloat(k))||k.length<=1) return;
+    clean[k]=entries;
+  });
+  if(!Object.keys(clean).length) return {html:`<div class="remark-card">No BD reasons found in data.</div>`, totalTime:0};
+
+  const sorted=Object.entries(clean).sort((a,b)=>b[1].length-a[1].length);
+  const maxFreq=sorted[0][1].length;
+  const repeated=sorted.filter(([,entries])=>entries.length>1);
+  const single=sorted.filter(([,entries])=>entries.length===1);
+
+  // Calculate total BD time — sum of DT across ALL displayed entries (repeats × their DT)
+  let totalTime=0;
+  sorted.forEach(([,entries])=>{
+    entries.forEach(e=>{ totalTime+=e.dtVal||0; });
+  });
+
+  // Unique card ID counter for click expand
+  let _cid=0;
+  function makeCard(reason, entries, cardCls, badgeCls, fillColor){
+    const count=entries.length;
+    const width=Math.round(count/maxFreq*100);
+    // Per-reason total DT
+    const reasonTotal=entries.reduce((s,e)=>s+(e.dtVal||0),0);
+    const cid='rmc_'+(++_cid);
+    // Build per-date DT rows for the expand panel
+    const dtRows=entries.map(e=>`<div class="remark-dt-row"><span>${e.date}</span><span>${e.dtVal?fmt(e.dtVal)+' min':'—'}</span></div>`).join('');
+    const expandHtml=`<div class="remark-dt-expand" id="exp_${cid}">
+      ${dtRows}
+      ${count>1?`<div class="remark-dt-total-row"><span class="remark-dt-total-label">Total</span><span class="remark-dt-total-val">${fmt(reasonTotal)} min</span></div>`:''}
+    </div>`;
+    return `<div class="remark-card ${cardCls}" id="${cid}" title="Click to see breakdown time" onclick="toggleRemarkDT('${cid}')">
+      <div class="remark-row">
+        <span>${reason}</span>
+        <span class="${badgeCls}">${count}×</span>
+      </div>
+      ${cardCls?`<div class="remark-bar-wrap"><div class="remark-bar" style="width:${width}%;background:${fillColor}"></div></div>`:''}
+      ${expandHtml}
+    </div>`;
+  }
+
+  let html='';
+
+  if(repeated.length){
+    html+=`<div class="remark-section-header critical">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      ${repeated.length} REPEATED BD REASON${repeated.length>1?'S':''} – NEEDS ATTENTION
+    </div>`;
+    html+=repeated.map(([reason,entries])=>{
+      const count=entries.length;
+      const cardCls=count>=5?'rep-critical':count>=3?'rep-high':'rep-med';
+      const badgeCls=count>=5?'badge-critical':count>=3?'badge-high':'badge-med';
+      const fillColor=count>=5?'var(--red)':count>=3?'var(--amber)':'var(--blue)';
+      return makeCard(reason,entries,cardCls,badgeCls,fillColor);
+    }).join('');
+  }
+
+  if(single.length){
+    html+=`<div class="remark-section-header normal" style="margin-top:${repeated.length?'10px':'0'}">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      SINGLE OCCURRENCES (${single.length})
+    </div>`;
+    html+=single.map(([reason,entries])=>makeCard(reason,entries,'','badge-single','')).join('');
+  }
+
+  return {html, totalTime};
+}
+
+function openTrendFullscreen(shopId){
+  const d=window._trendData&&window._trendData[shopId];
+  if(!d) return;
+  const modal=document.getElementById('trend-fullscreen-modal');
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+
+  // Meta label
+  document.getElementById('tfs-meta-label').textContent='— '+d.shop+' · '+d.rowCount+' data points';
+
+  // Badges
+  const badgesEl=document.getElementById('tfs-badges');
+  let badgeHTML=`<div class="tfs-badge tfs-badge-green">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Target: ${d.effTarget}%
+  </div>`;
+  if(d.grossDTTargetKey&&d.grossDTTargetValue){
+    badgeHTML+=`<div class="tfs-badge tfs-badge-orange">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Gross DT Target: ${fmt(d.grossDTTargetValue)} min
+    </div>`;
+  }
+  badgesEl.innerHTML=badgeHTML;
+
+  // Legend
+  const legendDefs=[
+    {color:'#f59e0b',label:'Line Efficiency',idx:0},
+    {color:'#3b82f6',label:'OEE',idx:1},
+    {color:'#ef4444',label:'Gross DT (Min)',idx:2,bar:true},
+    {color:'#10b981',label:'Production',idx:3},
+  ];
+  document.getElementById('tfs-legend').innerHTML=legendDefs.map(l=>`
+    <div class="tfs-leg-item" data-idx="${l.idx}" onclick="toggleTfsDataset(${l.idx},this)">
+      <div class="tfs-leg-swatch" style="background:${l.color};${l.bar?'height:10px;width:14px;border-radius:2px':''}"></div>
+      ${l.label}
+    </div>`).join('');
+
+  // Destroy previous fullscreen chart
+  if(window._tfsChart){window._tfsChart.destroy();window._tfsChart=null;}
+
+  // Build fullscreen chart (same logic, bigger canvas)
+  const ctx=document.getElementById('tfs-canvas');
+  const commonTooltip={
+    backgroundColor:'#0d1829',borderColor:'rgba(26,86,219,.25)',borderWidth:1,
+    titleColor:'#e2e8f0',bodyColor:'#7a9ab8',padding:14,cornerRadius:8,
+    bodyFont:{family:'DM Mono',size:12},titleFont:{family:'DM Mono',size:12,weight:'600'}
+  };
+  window._tfsChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:d.labels,datasets:[
+      {label:'Line Efficiency Trend',data:d.effData,type:'line',borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:2.5,pointRadius:4,pointHoverRadius:7,tension:.4,yAxisID:'y',fill:true,order:1,
+        datalabels:{display:true,align:'top',anchor:'end',color:'#fbbf24',font:{size:10,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(2)+'%',padding:{bottom:2}}},
+      {label:'OEE Trend',data:d.oeeData,type:'line',borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.07)',borderWidth:2.5,pointRadius:4,pointHoverRadius:7,tension:.4,yAxisID:'y',fill:true,order:1,
+        datalabels:{display:true,align:'bottom',anchor:'end',color:'#93c5fd',font:{size:10,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(2)+'%',padding:{top:2}}},
+      {label:'Gross DT (Min)',data:d.prodDTData,type:'bar',backgroundColor:'rgba(239,68,68,.5)',borderColor:'#ef4444',borderWidth:1,borderRadius:4,yAxisID:'y2',order:2,
+        datalabels:{display:'auto',anchor:'end',align:'end',color:'#fca5a5',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN')}},
+      {label:'Production',data:d.prodData,type:'line',borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.06)',borderWidth:2,pointRadius:4,pointHoverRadius:7,tension:.4,yAxisID:'y2',order:1,
+        datalabels:{display:true,align:'top',anchor:'end',color:'#6ee7b7',font:{size:10,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN'),padding:{bottom:2}}},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{...commonTooltip},
+        datalabels:{clip:false},
+      },
+      layout:{padding:{top:24,right:16,bottom:8}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#94a3b8',font:{size:11,family:'DM Mono'},maxRotation:40,autoSkip:true,maxTicksLimit:20},border:{color:'rgba(255,255,255,.12)'}},
+        y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#94a3b8',font:{size:11,family:'DM Mono'},callback:v=>v+'%'},border:{color:'rgba(255,255,255,.12)'},min:0,max:115,position:'left'},
+        y2:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11,family:'DM Mono'},callback:v=>v>=1000?(v/1000).toFixed(2)+'k':(+v.toFixed(2)).toLocaleString('en-IN')},border:{color:'rgba(255,255,255,.12)'},position:'right'},
+      }
+    }
+  });
+}
+
+function closeTrendFullscreen(){
+  const modal=document.getElementById('trend-fullscreen-modal');
+  modal.classList.remove('open');
+  document.body.style.overflow='';
+  if(window._tfsChart){window._tfsChart.destroy();window._tfsChart=null;}
+}
+
+function toggleTfsDataset(idx,el){
+  if(!window._tfsChart)return;
+  const meta=window._tfsChart.getDatasetMeta(idx);
+  meta.hidden=!meta.hidden;
+  el.classList.toggle('hidden',meta.hidden);
+  window._tfsChart.update();
+}
+
+// Close on Escape key
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const modal=document.getElementById('trend-fullscreen-modal');
+    if(modal&&modal.classList.contains('open'))closeTrendFullscreen();
+  }
+});
+
+function toggleRemarkDT(cid){
+  const card=document.getElementById(cid);
+  if(!card) return;
+  const exp=document.getElementById('exp_'+cid);
+  if(!exp) return;
+  const isOpen=exp.classList.contains('open');
+  exp.classList.toggle('open',!isOpen);
+  card.classList.toggle('expanded',!isOpen);
+}
+
+// ══════════════════════════════════════════════════
+//  SHOP COMPARISON MODULE (v2 – Charts Only)
+// ══════════════════════════════════════════════════
+let _scPerfChart = null;
+let _scMttrChart = null;
+let _scDurationMonths = 1; // default 1 month
+
+function openShopComparison(){
+  const el = document.getElementById('shop-comparison-view');
+  el.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(()=>{ el.style.opacity = '1'; });
+  // Populate shop filter dropdown
+  _scPopulateShopFilter();
+  renderShopComparison();
+}
+
+function closeShopComparison(){
+  const el = document.getElementById('shop-comparison-view');
+  el.style.opacity = '0';
+  document.body.style.overflow = '';
+  setTimeout(()=>{ el.style.display = 'none'; }, 350);
+  if(_scPerfChart){ _scPerfChart.destroy(); _scPerfChart = null; }
+  if(_scMttrChart){ _scMttrChart.destroy(); _scMttrChart = null; }
+}
+
+function _scPopulateShopFilter(){
+  const sel = document.getElementById('sc-shop-filter');
+  const shops = Object.keys(allDataUnfiltered);
+  // Keep "All Shops" first, then each shop
+  sel.innerHTML = '<option value="all">All Shops</option>' +
+    shops.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+function scSetDuration(months, btn){
+  _scDurationMonths = months;
+  document.querySelectorAll('.sc-dur-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShopComparison();
+}
+
+// Returns filtered rows for a shop based on selected duration
+function _scGetFilteredRows(shopName){
+  const raw = allDataUnfiltered[shopName] || [];
+  if(!raw.length) return raw;
+  if(!globalDateKey) return raw;
+
+  // Collect all dates to find the max date
+  const allDates = raw.map(r=>toDate(r[globalDateKey])).filter(Boolean);
+  if(!allDates.length) return raw;
+  allDates.sort((a,b)=>b-a);
+  const maxDate = allDates[0];
+
+  // Calculate cutoff: go back _scDurationMonths months from maxDate
+  const cutoff = new Date(maxDate);
+  cutoff.setMonth(cutoff.getMonth() - _scDurationMonths);
+
+  return raw.filter(r=>{
+    const d = toDate(r[globalDateKey]);
+    if(!d) return true;
+    return d >= cutoff && d <= maxDate;
+  });
+}
+
+function getUtilColor(pct){
+  if(pct >= 90) return { solid:'#10b981', bg:'rgba(16,185,129,.12)', border:'rgba(16,185,129,.3)', text:'#065f46', label:'On Target', cls:'green' };
+  if(pct >= 75) return { solid:'#d97706', bg:'rgba(217,119,6,.12)', border:'rgba(217,119,6,.3)', text:'#92400e', label:'Moderate', cls:'amber' };
+  return { solid:'#dc2626', bg:'rgba(220,38,38,.12)', border:'rgba(220,38,38,.3)', text:'#991b1b', label:'Below Target', cls:'red' };
+}
+
+function renderShopComparison(){
+  if(!Object.keys(allDataUnfiltered).length) return;
+
+  const selectedShop = document.getElementById('sc-shop-filter').value;
+  const allShopNames = Object.keys(allDataUnfiltered);
+
+  // Determine which shops to show
+  const shopsToRender = selectedShop === 'all' ? allShopNames : [selectedShop];
+
+  // Get filtered rows per shop
+  const shopDataMap = {};
+  shopsToRender.forEach(s=>{ shopDataMap[s] = _scGetFilteredRows(s); });
+
+  // Update header date label and range display
+  const allFilteredRows = shopsToRender.flatMap(s=>shopDataMap[s]);
+  let rangeText = 'All Data';
+  if(globalDateKey && allFilteredRows.length){
+    const dates = allFilteredRows.map(r=>toDate(r[globalDateKey])).filter(Boolean).sort((a,b)=>a-b);
+    if(dates.length){
+      const fmt2 = d=>d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
+      rangeText = `${fmt2(dates[0])} – ${fmt2(dates[dates.length-1])}`;
+    }
+  }
+  document.getElementById('sc-date-label').textContent =
+    selectedShop === 'all' ? `All Shops · ${_scDurationMonths}M` : `${selectedShop} · ${_scDurationMonths}M`;
+  document.getElementById('sc-range-display').textContent = rangeText;
+
+  // ── Aggregate per-shop metrics ──
+  const shopStats = shopsToRender.map(shop=>{
+    const rows = shopDataMap[shop] || [];
+    if(!rows.length) return null;
+    const r0 = rows[0];
+
+    const prodKey  = getCol(r0, ['Actual Production','ActualProd']);
+    const leKey    = getCol(r0, ['Line Efficiency','LineEff','LE']);
+    const dtKey    = getCol(r0, ['Gross DT','GrossDT','Gross DT (Target)','GrossDT(Target)']);
+    const mttrKey  = getCol(r0, ['MTTR','mttr']);
+    const mtbfKey  = getCol(r0, ['MTBF','mtbf']);
+
+    const totalProd = prodKey ? rows.reduce((s,r)=>s+gv(r,[prodKey]),0) : 0;
+
+    // Line efficiency: average (handle both 0-1 and 0-100 scales)
+    let avgLE = 0;
+    if(leKey){
+      const vals = rows.map(r=>{ const v=gv(r,[leKey]); return v>1?v:v*100; }).filter(v=>v>0);
+      avgLE = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    }
+
+    // Gross DT: sum
+    const totalDT = dtKey ? rows.reduce((s,r)=>s+gv(r,[dtKey]),0) : 0;
+
+    // MTTR: sum
+    let avgMTTR = 0;
+    if(mttrKey){
+      const vals = rows.map(r=>gv(r,[mttrKey])).filter(v=>v>0);
+      avgMTTR = vals.length ? vals.reduce((a,b)=>a+b,0) : 0;
+    }
+
+    // MTBF: sum
+    let avgMTBF = 0;
+    if(mtbfKey){
+      const vals = rows.map(r=>gv(r,[mtbfKey])).filter(v=>v>0);
+      avgMTBF = vals.length ? vals.reduce((a,b)=>a+b,0) : 0;
+    }
+
+    return { shop, totalProd, avgLE, totalDT, avgMTTR, avgMTBF, rows: rows.length };
+  }).filter(Boolean);
+
+  if(!shopStats.length) return;
+
+  const shopLabels = shopStats.map(s=>s.shop);
+  const commonTooltipBase = {
+    backgroundColor:'#0d1829', borderColor:'rgba(26,86,219,.25)', borderWidth:1,
+    titleColor:'#e2e8f0', bodyColor:'#94a3b8', padding:14, cornerRadius:8,
+    bodyFont:{family:'DM Mono',size:12}, titleFont:{family:'DM Mono',size:12,weight:'600'}
+  };
+
+  // ══ CHART 1: Shop Performance Comparison ══
+  if(_scPerfChart){ _scPerfChart.destroy(); _scPerfChart=null; }
+
+  const prodVals = shopStats.map(s=>s.totalProd);
+  const leVals   = shopStats.map(s=>+s.avgLE.toFixed(2));
+  const dtVals   = shopStats.map(s=>+s.totalDT.toFixed(0));
+
+  // Normalise production to same scale range for grouped bar readability
+  const maxProd = Math.max(...prodVals, 1);
+  const maxDT   = Math.max(...dtVals, 1);
+
+  const ctx1 = document.getElementById('sc-perf-chart');
+  _scPerfChart = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: shopLabels,
+      datasets: [
+        {
+          label: 'Actual Production',
+          data: prodVals,
+          backgroundColor: 'rgba(0,51,153,.75)',
+          borderColor: '#003399',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          borderSkipped: false,
+          yAxisID: 'yProd',
+          order: 1,
+          datalabels: {
+            display: true, anchor:'end', align:'end',
+            color:'#3b82f6', font:{size:9,family:'DM Mono',weight:'600'},
+            formatter: v=>v>=1000000?(v/1000000).toFixed(2)+'M':v>=1000?(v/1000).toFixed(1)+'K':(+v.toFixed(0)).toLocaleString('en-IN')
+          }
+        },
+        {
+          label: 'Line Efficiency (%)',
+          data: leVals,
+          backgroundColor: 'rgba(245,158,11,.75)',
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          borderSkipped: false,
+          yAxisID: 'yPct',
+          order: 1,
+          datalabels: {
+            display: true, anchor:'end', align:'end',
+            color:'#fbbf24', font:{size:9,family:'DM Mono',weight:'600'},
+            formatter: v=>v.toFixed(1)+'%'
+          }
+        },
+        {
+          label: 'Gross DT (Min)',
+          data: dtVals,
+          backgroundColor: 'rgba(220,38,38,.70)',
+          borderColor: '#dc2626',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          borderSkipped: false,
+          yAxisID: 'yDT',
+          order: 1,
+          datalabels: {
+            display: true, anchor:'end', align:'end',
+            color:'#f87171', font:{size:9,family:'DM Mono',weight:'600'},
+            formatter: v=>v>=1000?(v/1000).toFixed(1)+'k':(+v.toFixed(0)).toLocaleString('en-IN')
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing:'easeOutQuart' },
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...commonTooltipBase,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => {
+              const v = item.raw;
+              if(item.datasetIndex===0) return `  Production: ${v>=1000000?(v/1000000).toFixed(2)+'M':v>=1000?(v/1000).toFixed(1)+'K':(+v.toFixed(0)).toLocaleString('en-IN')}`;
+              if(item.datasetIndex===1) return `  Line Eff: ${v.toFixed(2)}%`;
+              return `  Gross DT: ${v>=1000?(v/1000).toFixed(1)+'k':(+v.toFixed(0))} min`;
+            }
+          }
+        },
+        datalabels: { clip: false }
+      },
+      layout: { padding:{ top:30, right:16, bottom:4 } },
+      scales: {
+        x: {
+          grid:{ color:'rgba(226,230,239,.6)' },
+          ticks:{ color:'#64748b', font:{size:11,family:'DM Mono'} },
+          border:{ color:'rgba(226,230,239,.8)' }
+        },
+        yProd: {
+          position:'left',
+          grid:{ color:'rgba(226,230,239,.6)' },
+          ticks:{ color:'#6366f1', font:{size:10,family:'DM Mono'}, callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v },
+          border:{ color:'rgba(99,102,241,.3)' },
+          beginAtZero:true,
+          title:{ display:true, text:'Production', color:'#6366f1', font:{size:9,family:'DM Mono'} }
+        },
+        yPct: {
+          position:'right',
+          grid:{ drawOnChartArea:false },
+          ticks:{ color:'#f59e0b', font:{size:10,family:'DM Mono'}, callback:v=>v+'%' },
+          border:{ color:'rgba(245,158,11,.3)' },
+          min:0, max:110,
+          title:{ display:true, text:'Efficiency %', color:'#f59e0b', font:{size:9,family:'DM Mono'} }
+        },
+        yDT: {
+          position:'right',
+          grid:{ drawOnChartArea:false },
+          ticks:{ color:'#dc2626', font:{size:10,family:'DM Mono'}, callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v },
+          border:{ color:'rgba(220,38,38,.3)' },
+          beginAtZero:true,
+          title:{ display:true, text:'DT (Min)', color:'#dc2626', font:{size:9,family:'DM Mono'} },
+          display: false   // hidden axis; DT uses its own readable scale via tooltip
+        }
+      }
+    }
+  });
+
+  // ══ CHART 2: MTTR & MTBF Analysis ══
+  if(_scMttrChart){ _scMttrChart.destroy(); _scMttrChart=null; }
+
+  const mttrVals = shopStats.map(s=>+s.avgMTTR.toFixed(2));
+  const mtbfVals = shopStats.map(s=>+s.avgMTBF.toFixed(2));
+  const hasMttrData = mttrVals.some(v=>v>0);
+  const hasMtbfData = mtbfVals.some(v=>v>0);
+
+  const ctx2 = document.getElementById('sc-mttr-chart');
+
+  if(!hasMttrData && !hasMtbfData){
+    // No MTTR/MTBF data — show a friendly empty state inside the canvas area
+    const parent = ctx2.parentElement;
+    parent.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--dim)">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div style="font-size:12px;font-family:'DM Mono',monospace;text-align:center;color:var(--muted)">MTTR & MTBF columns not found in dataset</div>
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--dim)">Expected columns: MTTR, MTBF</div>
+    </div>`;
+    return;
+  }
+
+  _scMttrChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: shopLabels,
+      datasets: [
+        {
+          label: 'Sum of MTTR (Min)',
+          data: mttrVals,
+          backgroundColor: 'rgba(124,58,237,.75)',
+          borderColor: '#7c3aed',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          borderSkipped: false,
+          yAxisID: 'y',
+          datalabels: {
+            display: true, anchor:'end', align:'end',
+            color:'#a78bfa', font:{size:9,family:'DM Mono',weight:'600'},
+            formatter: v=>v>0?v.toFixed(1):'—'
+          }
+        },
+        {
+          label: 'Sum of MTBF (Min)',
+          data: mtbfVals,
+          backgroundColor: 'rgba(8,145,178,.72)',
+          borderColor: '#0891b2',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          borderSkipped: false,
+          yAxisID: 'y2',
+          datalabels: {
+            display: true, anchor:'end', align:'end',
+            color:'#22d3ee', font:{size:9,family:'DM Mono',weight:'600'},
+            formatter: v=>v>0?v.toFixed(1):'—'
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation:{ duration:900, easing:'easeOutQuart' },
+      interaction:{ mode:'index', intersect:false },
+      plugins: {
+        legend:{ display:false },
+        tooltip:{
+          ...commonTooltipBase,
+          callbacks:{
+            title: items=>items[0].label,
+            label: item=>{
+              const v = item.raw;
+              if(item.datasetIndex===0) return `  Sum of MTTR: ${v.toFixed(2)} min`;
+              return `  Sum of MTBF: ${v.toFixed(2)} min`;
+            }
+          }
+        },
+        datalabels:{ clip:false }
+      },
+      layout:{ padding:{ top:30, right:16, bottom:4 } },
+      scales:{
+        x:{
+          grid:{ color:'rgba(226,230,239,.6)' },
+          ticks:{ color:'#64748b', font:{size:11,family:'DM Mono'} },
+          border:{ color:'rgba(226,230,239,.8)' }
+        },
+        y:{
+          position:'left',
+          grid:{ color:'rgba(226,230,239,.6)' },
+          ticks:{ color:'#7c3aed', font:{size:10,family:'DM Mono'}, callback:v=>v+' m' },
+          border:{ color:'rgba(124,58,237,.3)' },
+          beginAtZero:true,
+          title:{ display:true, text:'Sum of MTTR (Min)', color:'#7c3aed', font:{size:9,family:'DM Mono'} }
+        },
+        y2:{
+          position:'right',
+          grid:{ drawOnChartArea:false },
+          ticks:{ color:'#0891b2', font:{size:10,family:'DM Mono'}, callback:v=>v+' m' },
+          border:{ color:'rgba(8,145,178,.3)' },
+          beginAtZero:true,
+          title:{ display:true, text:'Sum of MTBF (Min)', color:'#0891b2', font:{size:9,family:'DM Mono'} }
+        }
+      }
+    }
+  });
+}
+
+// Close comparison on Escape
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    const dd = document.getElementById('an-drilldown');
+    if(dd && dd.classList.contains('open')){ closeAnDrilldown(); return; }
+    const av = document.getElementById('analysis-view');
+    if(av && av.style.display !== 'none'){ closeAnalysisPage(); return; }
+    const sc = document.getElementById('shop-comparison-view');
+    if(sc && sc.style.display !== 'none') closeShopComparison();
+  }
+});
+
+// ══════════════════════════════════════════════════
+//  ANALYSIS MODULE
+// ══════════════════════════════════════════════════
+let _anMetric = 'oe_le';
+let _anDuration = 1;
+let _anCharts = {};
+let _anDdChart = null;
+
+const AN_METRIC_LABELS = {
+  oe_le: 'OE & Line Efficiency',
+  production: 'Actual Production',
+  uptime_adt: 'UpTime by Affected DT',
+  uptime_gdt: 'UpTime by Gross DT',
+  act_tgt: 'Act vs Tgt Gross Dwt & Aff Dwt',
+  mttr_mtbf: 'MTTR & MTBF',
+  loss: 'Loss & Downtime Analysis',
+  breakdown: 'Breakdown',
+  shop_perf: 'Shop Performance'
+};
+
+function openAnalysisPage(){
+  const el = document.getElementById('analysis-view');
+  el.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(()=>{ el.style.opacity = '1'; });
+  renderAnalysisPage();
+}
+
+function closeAnalysisPage(){
+  const el = document.getElementById('analysis-view');
+  el.style.opacity = '0';
+  document.body.style.overflow = '';
+  setTimeout(()=>{ el.style.display = 'none'; }, 350);
+  _anDestroyAllCharts();
+}
+
+function anSetMetric(metric, btn){
+  _anMetric = metric;
+  document.querySelectorAll('.an-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _anDestroyAllCharts();
+  renderAnalysisPage();
+}
+
+function anSetDuration(months, btn){
+  _anDuration = months;
+  document.querySelectorAll('.an-dur-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _anDestroyAllCharts();
+  renderAnalysisPage();
+}
+
+function _anDestroyAllCharts(){
+  Object.values(_anCharts).forEach(c=>{ try{ c.destroy(); }catch(e){} });
+  _anCharts = {};
+}
+
+function _anGetFilteredRows(shopName){
+  const raw = allDataUnfiltered[shopName] || [];
+  if(!raw.length || !globalDateKey) return raw;
+  if(_anDuration === 0) return raw;
+  const allDates = raw.map(r=>toDate(r[globalDateKey])).filter(Boolean);
+  if(!allDates.length) return raw;
+  allDates.sort((a,b)=>b-a);
+  const maxDate = allDates[0];
+  const cutoff = new Date(maxDate);
+  cutoff.setMonth(cutoff.getMonth() - _anDuration);
+  return raw.filter(r=>{ const d=toDate(r[globalDateKey]); if(!d)return true; return d>=cutoff&&d<=maxDate; });
+}
+
+function _anBuildMonthGroups(rows){
+  if(!globalDateKey||!rows.length) return {labels:[], groups:[]};
+  const monthMap={};
+  rows.forEach(r=>{
+    const d=toDate(r[globalDateKey]); if(!d) return;
+    const k=d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0');
+    if(!monthMap[k]) monthMap[k]=[];
+    monthMap[k].push(r);
+  });
+  const spanYears=[...new Set(Object.keys(monthMap).map(k=>k.split('-')[0]))].length>1;
+  const labels=[], groups=[];
+  Object.keys(monthMap).sort().forEach(k=>{
+    const [y,m]=k.split('-');
+    const lbl=new Date(+y,+m-1,1).toLocaleDateString('en-IN',spanYears?{month:'short',year:'2-digit'}:{month:'short'});
+    labels.push(lbl);
+    groups.push(monthMap[k]);
+  });
+  return {labels, groups};
+}
+
+function renderAnalysisPage(){
+  if(!Object.keys(allDataUnfiltered).length) return;
+  const shops = Object.keys(allDataUnfiltered);
+  const content = document.getElementById('an-content');
+
+  // Update range label
+  const allRows = shops.flatMap(s=>_anGetFilteredRows(s));
+  if(globalDateKey && allRows.length){
+    const dates = allRows.map(r=>toDate(r[globalDateKey])).filter(Boolean).sort((a,b)=>a-b);
+    if(dates.length){
+      const fmt2=d=>d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
+      document.getElementById('an-range-label').textContent=`${fmt2(dates[0])} – ${fmt2(dates[dates.length-1])}`;
+      document.getElementById('an-date-label').textContent=_anDuration===0?'All Data':_anDuration+'M View';
+    }
+  }
+
+  // Build grid of shop cards
+  content.innerHTML = shops.map(shop=>`
+    <div class="an-shop-card" id="an-card-${shop.replace(/[^a-z0-9]/gi,'_')}">
+      <div class="an-card-head">
+        <div class="an-card-title"><div class="an-card-title-dot"></div>${shop}</div>
+        <div class="an-card-meta" id="an-meta-${shop.replace(/[^a-z0-9]/gi,'_')}">—</div>
+      </div>
+      <div class="an-chart-wrap"><canvas id="an-chart-${shop.replace(/[^a-z0-9]/gi,'_')}" role="img"></canvas></div>
+      <div class="an-kpi-row" id="an-kpis-${shop.replace(/[^a-z0-9]/gi,'_')}"></div>
+      <div class="an-click-hint">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Click any bar/month to drill down to day-wise data
+      </div>
+    </div>
+  `).join('');
+
+  // Render charts per shop (deferred)
+  shops.forEach((shop,i)=>{
+    setTimeout(()=>_anRenderShopCard(shop), i*30);
+  });
+}
+
+function _anRenderShopCard(shop){
+  const sid = shop.replace(/[^a-z0-9]/gi,'_');
+  const canvasEl = document.getElementById('an-chart-'+sid);
+  if(!canvasEl) return;
+  const rows = _anGetFilteredRows(shop);
+  if(!rows.length){
+    canvasEl.parentElement.innerHTML=`<div class="an-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>No data in selected range</div>`;
+    return;
+  }
+  const r0 = rows[0];
+  const {labels, groups} = _anBuildMonthGroups(rows);
+  if(!labels.length) return;
+
+  // Key detection (reuse same logic as main dashboard)
+  const prodKey  = getCol(r0,['Actual Production','ActualProd']);
+  const leKey    = getCol(r0,['Line Efficiency','LineEff','LE']);
+  const oeKey    = getCol(r0,['OE','OEE']);
+  const dtKey    = getCol(r0,['Production DT','Net DT','DT (Min)','DT']);
+  const affDtKey = getCol(r0,['Affected DT','Aff DT','Aff. DT','Affected Downtime']);
+  const grossDTKey= getCol(r0,['Gross DT','GrossDT']);
+  const grossDTTgtKey=getCol(r0,['Gross DT (Target)','GrossDT(Target)','Gross DT Target']);
+  const upKey    = getCol(r0,['Uptime (Min)','Uptime']);
+  const mttrKey  = getCol(r0,['MTTR']);
+  const mtbfKey  = getCol(r0,['MTBF']);
+
+  function aggAvg(key){ return groups.map(g=>{ const vs=g.map(r=>{ const v=gv(r,[key||'_x']); return key?v:0; }).filter(v=>v>0); return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null; }); }
+  function aggSum(key){ return groups.map(g=>key?g.reduce((s,r)=>s+gv(r,[key]),0):null); }
+  function pctScale(vals){ return vals.map(v=>v==null?null:v>1?v:v*100); }
+
+  const commonBase={
+    backgroundColor:'#0d1829',borderColor:'rgba(26,86,219,.25)',borderWidth:1,
+    titleColor:'#e2e8f0',bodyColor:'#7a9ab8',padding:12,cornerRadius:8,
+    bodyFont:{family:'DM Mono',size:11},titleFont:{family:'DM Mono',size:11,weight:'600'}
+  };
+
+  let datasets=[], yAxes={}, kpiHTML='', metaText='';
+  const m = _anMetric;
+
+  if(m==='oe_le'){
+    const leVals=pctScale(aggAvg(leKey));
+    const oeVals=pctScale(aggAvg(oeKey));
+    datasets=[
+      {label:'Line Efficiency %',data:leVals,type:'bar',backgroundColor:'rgba(0,51,153,.72)',borderColor:'#003399',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#1a56db',font:{size:8,family:'DM Mono',weight:'700'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+      {label:'OE %',data:oeVals,type:'bar',backgroundColor:'rgba(100,149,237,.65)',borderColor:'#6495ed',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#6495ed',font:{size:8,family:'DM Mono',weight:'700'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+    ];
+    yAxes={y:{min:0,max:120,ticks:{callback:v=>v+'%'}}};
+    const avgLE=leVals.filter(Boolean).reduce((a,b)=>a+b,0)/(leVals.filter(Boolean).length||1);
+    const avgOE=oeVals.filter(Boolean).reduce((a,b)=>a+b,0)/(oeVals.filter(Boolean).length||1);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Avg Line Eff</div><div class="an-kpi-val" style="color:var(--tata)">${avgLE.toFixed(1)}%</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Avg OE</div><div class="an-kpi-val" style="color:#6495ed">${avgOE.toFixed(1)}%</div></div>`;
+    metaText=`${labels.length} months`;
+  } else if(m==='production'){
+    const pVals=aggSum(prodKey);
+    datasets=[{label:'Actual Production',data:pVals,backgroundColor:'rgba(5,150,105,.72)',borderColor:'#059669',borderWidth:1.5,borderRadius:4,borderSkipped:false,
+      datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:8,family:'DM Mono',weight:'700'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}}];
+    yAxes={y:{min:0}};
+    const tot=pVals.filter(Boolean).reduce((a,b)=>a+b,0);
+    const avg=tot/(pVals.filter(Boolean).length||1);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Total</div><div class="an-kpi-val" style="color:var(--green)">${tot>=1000?(tot/1000).toFixed(1)+'k':Math.round(tot)}</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Avg/Month</div><div class="an-kpi-val">${avg>=1000?(avg/1000).toFixed(1)+'k':Math.round(avg)}</div></div>`;
+    metaText=`Total: ${tot>=1000?(tot/1000).toFixed(1)+'k':Math.round(tot)} units`;
+  } else if(m==='uptime_adt'){
+    const upVals=aggSum(upKey||dtKey);
+    const adtVals=aggSum(affDtKey||dtKey);
+    datasets=[
+      {label:'Uptime (Min)',data:upVals,backgroundColor:'rgba(5,150,105,.7)',borderColor:'#059669',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'Affected DT (Min)',data:adtVals,type:'line',borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.08)',borderWidth:2,pointRadius:3,tension:.4,yAxisID:'y2',
+        datalabels:{display:true,anchor:'end',align:'top',color:'#dc2626',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+    ];
+    yAxes={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const totUp=(upVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totADT=(adtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Total Uptime</div><div class="an-kpi-val" style="color:var(--green)">${totUp>=1000?(totUp/1000).toFixed(1)+'k':Math.round(totUp)}</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Total Aff. DT</div><div class="an-kpi-val" style="color:var(--red)">${totADT>=1000?(totADT/1000).toFixed(1)+'k':Math.round(totADT)}</div></div>`;
+    metaText=``;
+  } else if(m==='uptime_gdt'){
+    const upVals=aggSum(upKey||dtKey);
+    const gdtVals=aggSum(grossDTKey||dtKey);
+    const gdtTgtVals=aggSum(grossDTTgtKey);
+    datasets=[
+      {label:'Uptime (Min)',data:upVals,backgroundColor:'rgba(5,150,105,.7)',borderColor:'#059669',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'Gross DT (Min)',data:gdtVals,type:'line',borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.06)',borderWidth:2,pointRadius:3,tension:.4,yAxisID:'y2',
+        datalabels:{display:false}},
+    ];
+    if(gdtTgtVals&&gdtTgtVals.some(v=>v!=null&&v>0)){
+      datasets.push({label:'GDT Target',data:gdtTgtVals,type:'line',borderColor:'#d97706',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:3,tension:.3,yAxisID:'y2',datalabels:{display:false}});
+    }
+    yAxes={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const totUp=(upVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totGDT=(gdtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Total Uptime</div><div class="an-kpi-val" style="color:var(--green)">${totUp>=1000?(totUp/1000).toFixed(1)+'k':Math.round(totUp)}</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Gross DT</div><div class="an-kpi-val" style="color:var(--red)">${totGDT>=1000?(totGDT/1000).toFixed(1)+'k':Math.round(totGDT)}</div></div>`;
+    metaText=``;
+  } else if(m==='act_tgt'){
+    const gdtVals=aggSum(grossDTKey||dtKey);
+    const gdtTgtVals=aggSum(grossDTTgtKey||dtKey);
+    const adtVals=aggSum(affDtKey||dtKey);
+    datasets=[
+      {label:'Gross DT (Act)',data:gdtVals,backgroundColor:'rgba(220,38,38,.65)',borderColor:'#dc2626',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#dc2626',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'Gross DT (Tgt)',data:gdtTgtVals,type:'line',borderColor:'#d97706',borderWidth:2,borderDash:[5,4],pointRadius:3,tension:.3,yAxisID:'y',
+        datalabels:{display:false}},
+      {label:'Aff. DT',data:adtVals,type:'line',borderColor:'#7c3aed',borderWidth:1.5,pointRadius:3,tension:.4,yAxisID:'y',
+        datalabels:{display:false}},
+    ];
+    yAxes={y:{min:0}};
+    const totGDT=(gdtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totTgt=(gdtTgtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Act Gross DT</div><div class="an-kpi-val" style="color:var(--red)">${totGDT>=1000?(totGDT/1000).toFixed(1)+'k':Math.round(totGDT)}</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Tgt Gross DT</div><div class="an-kpi-val" style="color:var(--amber)">${totTgt>=1000?(totTgt/1000).toFixed(1)+'k':Math.round(totTgt)}</div></div>`;
+    metaText=``;
+  } else if(m==='mttr_mtbf'){
+    const mttrVals=aggAvg(mttrKey);
+    const mtbfVals=aggAvg(mtbfKey);
+    datasets=[
+      {label:'MTTR (Min)',data:mttrVals,backgroundColor:'rgba(124,58,237,.72)',borderColor:'#7c3aed',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#a78bfa',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)}},
+      {label:'MTBF (Min)',data:mtbfVals,backgroundColor:'rgba(8,145,178,.65)',borderColor:'#0891b2',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y2',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#22d3ee',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)}},
+    ];
+    yAxes={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const avgMTTR=(mttrVals||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((mttrVals||[]).filter(Boolean).length||1);
+    const avgMTBF=(mtbfVals||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((mtbfVals||[]).filter(Boolean).length||1);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Avg MTTR</div><div class="an-kpi-val" style="color:#7c3aed">${avgMTTR.toFixed(1)}</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Avg MTBF</div><div class="an-kpi-val" style="color:#0891b2">${avgMTBF.toFixed(1)}</div></div>`;
+    metaText=``;
+  } else if(m==='loss'){
+    const dtVals=aggSum(dtKey);
+    const gdtVals=aggSum(grossDTKey||dtKey);
+    datasets=[
+      {label:'Production DT (Min)',data:dtVals,backgroundColor:'rgba(239,68,68,.7)',borderColor:'#ef4444',borderWidth:1.5,borderRadius:4,borderSkipped:false,
+        datalabels:{display:true,anchor:'end',align:'end',color:'#dc2626',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'Gross DT (Min)',data:gdtVals,type:'line',borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.06)',borderWidth:2,pointRadius:3,tension:.4,
+        datalabels:{display:false}},
+    ];
+    yAxes={y:{min:0}};
+    const totDT=(dtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Total Prod DT</div><div class="an-kpi-val" style="color:var(--red)">${totDT>=1000?(totDT/1000).toFixed(1)+'k':Math.round(totDT)} min</div></div>`;
+    metaText=``;
+  } else if(m==='breakdown'){
+    const bdTimeKey = getCol(r0,['BD Time','BDTime','Breakdown Time','BD Duration','BD Time (Min)']);
+    const dtVals=aggSum(bdTimeKey||dtKey);
+    const bdCounts=groups.map(g=>{
+      const bdRemarksKey=getCol(r0,['BD Reason','BD Remarks','Breakdown Reason','Remarks','Remark','BD Occurrence']);
+      if(!bdRemarksKey) return null;
+      return g.filter(r=>{ const v=String(r[bdRemarksKey]||'').trim(); return v&&v!=='-'&&v!=='0'&&v.toLowerCase()!=='nil'&&v.toLowerCase()!=='na'; }).length;
+    });
+    datasets=[
+      {label:'BD Time (Min)',data:dtVals,backgroundColor:'rgba(217,119,6,.7)',borderColor:'#d97706',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#d97706',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'BD Events',data:bdCounts,type:'line',borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.06)',borderWidth:2,pointRadius:3,tension:.4,yAxisID:'y2',
+        datalabels:{display:false}},
+    ];
+    yAxes={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const totBD=(dtVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Total BD Time</div><div class="an-kpi-val" style="color:var(--amber)">${totBD>=1000?(totBD/1000).toFixed(1)+'k':Math.round(totBD)} min</div></div>`;
+    metaText=``;
+  } else if(m==='shop_perf'){
+    const leVals=pctScale(aggAvg(leKey));
+    const pVals=aggSum(prodKey);
+    const dtVals=aggSum(dtKey);
+    datasets=[
+      {label:'Line Efficiency %',data:leVals,type:'line',borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:2,pointRadius:3,tension:.4,yAxisID:'y',
+        datalabels:{display:true,anchor:'end',align:'top',color:'#d97706',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+      {label:'Production',data:pVals,backgroundColor:'rgba(0,51,153,.65)',borderColor:'#003399',borderWidth:1.5,borderRadius:4,borderSkipped:false,yAxisID:'y2',
+        datalabels:{display:true,anchor:'end',align:'end',color:'#1a56db',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}},
+      {label:'Prod DT (Min)',data:dtVals,type:'line',borderColor:'#dc2626',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2,tension:.4,yAxisID:'y2',
+        datalabels:{display:false}},
+    ];
+    yAxes={y:{min:0,max:120,position:'left',ticks:{callback:v=>v+'%'}},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const avgLE=(leVals||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((leVals||[]).filter(Boolean).length||1);
+    const totP=(pVals||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    kpiHTML=`<div class="an-kpi"><div class="an-kpi-label">Avg Line Eff</div><div class="an-kpi-val" style="color:var(--amber)">${avgLE.toFixed(1)}%</div></div>
+             <div class="an-kpi"><div class="an-kpi-label">Total Prod</div><div class="an-kpi-val" style="color:var(--tata)">${totP>=1000?(totP/1000).toFixed(1)+'k':Math.round(totP)}</div></div>`;
+    metaText=`${labels.length} months`;
+  }
+
+  // Update KPIs
+  const kpiEl = document.getElementById('an-kpis-'+sid);
+  if(kpiEl) kpiEl.innerHTML = kpiHTML;
+  const metaEl = document.getElementById('an-meta-'+sid);
+  if(metaEl) metaEl.textContent = metaText;
+
+  // Rebuild yAxes config
+  const scalesConfig={x:{grid:{color:'rgba(0,0,0,.03)'},ticks:{color:'#64748b',font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:12},border:{color:'var(--border)'}}};
+  Object.entries(yAxes).forEach(([key,cfg])=>{
+    scalesConfig[key]={
+      ...cfg,
+      grid:key==='y'?{color:'rgba(0,0,0,.03)'}:{drawOnChartArea:false},
+      ticks:{color:'#64748b',font:{size:9,family:'DM Mono'},...(cfg.ticks||{})},
+      border:{color:'var(--border)'},
+      beginAtZero:true,
+      ...(cfg.position?{position:cfg.position}:{}),
+    };
+  });
+
+  // Draw chart
+  const chart = new Chart(canvasEl,{
+    type:'bar',
+    data:{labels, datasets},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:{duration:600,easing:'easeOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#0d1829',borderColor:'rgba(26,86,219,.25)',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#7a9ab8',padding:10,cornerRadius:7,bodyFont:{family:'DM Mono',size:11},titleFont:{family:'DM Mono',size:11,weight:'600'}},
+        datalabels:{clip:false}
+      },
+      layout:{padding:{top:22,right:8,bottom:2}},
+      scales: scalesConfig,
+      onClick:(evt,elements)=>{
+        if(!elements.length) return;
+        const idx=elements[0].index;
+        const monthLabel=labels[idx];
+        const monthRows=groups[idx];
+        openAnDrilldown(shop, monthLabel, monthRows, r0);
+      }
+    }
+  });
+  _anCharts[sid] = chart;
+}
+
+function openAnDrilldown(shop, monthLabel, monthRows, r0){
+  if(!monthRows||!monthRows.length) return;
+  const modal = document.getElementById('an-drilldown');
+  document.getElementById('an-dd-title').textContent = `${shop} — ${monthLabel}`;
+  document.getElementById('an-dd-sub').textContent = `Day-wise · ${AN_METRIC_LABELS[_anMetric]} · ${monthRows.length} entries`;
+
+  // Destroy previous drill chart
+  if(_anDdChart){ _anDdChart.destroy(); _anDdChart=null; }
+
+  // Build day-wise data
+  const dateKey=getCol(r0||monthRows[0],['Date','date']);
+  const prodKey=getCol(r0,['Actual Production','ActualProd']);
+  const leKey=getCol(r0,['Line Efficiency','LineEff','LE']);
+  const oeKey=getCol(r0,['OE','OEE']);
+  const dtKey=getCol(r0,['Production DT','Net DT','DT (Min)','DT']);
+  const affDtKey=getCol(r0,['Affected DT','Aff DT','Aff. DT','Affected Downtime']);
+  const grossDTKey=getCol(r0,['Gross DT','GrossDT']);
+  const grossDTTgtKey=getCol(r0,['Gross DT (Target)','GrossDT(Target)','Gross DT Target']);
+  const upKey=getCol(r0,['Uptime (Min)','Uptime']);
+  const mttrKey=getCol(r0,['MTTR']);
+  const mtbfKey=getCol(r0,['MTBF']);
+
+  // Group by day
+  const dayMap={};
+  monthRows.forEach(r=>{
+    const d=toDate(r[dateKey]); if(!d) return;
+    const k=d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+    if(!dayMap[k]) dayMap[k]=[];
+    dayMap[k].push(r);
+  });
+  const dayKeys=Object.keys(dayMap).sort();
+  const dayLabels=dayKeys.map(k=>{ const [y,m,dd]=k.split('-'); return new Date(+y,+m-1,+dd).toLocaleDateString('en-IN',{day:'numeric',month:'short'}); });
+  const dayGroups=dayKeys.map(k=>dayMap[k]);
+
+  function dayAvg(key){ return dayGroups.map(g=>{ if(!key) return null; const vs=g.map(r=>gv(r,[key])).filter(v=>v>0); return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null; }); }
+  function daySum(key){ return dayGroups.map(g=>key?g.reduce((s,r)=>s+gv(r,[key]),0):null); }
+  function dayPct(key){ return dayAvg(key).map(v=>v==null?null:v>1?v:v*100); }
+
+  let ddDatasets=[], ddScales={}, ddKpiHTML='', tableRows=[], tableCols=[];
+  const m=_anMetric;
+
+  if(m==='oe_le'){
+    const leD=dayPct(leKey), oeD=dayPct(oeKey);
+    ddDatasets=[
+      {label:'Line Efficiency %',data:leD,backgroundColor:'rgba(0,51,153,.7)',borderRadius:3,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'end',color:'#1a56db',font:{size:9,family:'DM Mono',weight:'700'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+      {label:'OE %',data:oeD,backgroundColor:'rgba(100,149,237,.65)',borderRadius:3,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'end',color:'#6495ed',font:{size:9,family:'DM Mono',weight:'700'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+    ];
+    ddScales={y:{min:0,max:120,ticks:{callback:v=>v+'%'}}};
+    const avgLE=leD.filter(Boolean).reduce((a,b)=>a+b,0)/(leD.filter(Boolean).length||1);
+    const avgOE=oeD.filter(Boolean).reduce((a,b)=>a+b,0)/(oeD.filter(Boolean).length||1);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg Line Eff</div><div class="an-dd-kpi-val" style="color:var(--tata)">${avgLE.toFixed(1)}%</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg OE</div><div class="an-dd-kpi-val" style="color:#6495ed">${avgOE.toFixed(1)}%</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Days</div><div class="an-dd-kpi-val">${dayLabels.length}</div></div>`;
+    tableCols=['Date','Line Efficiency %','OE %'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, le:leD[i]==null?'—':leD[i].toFixed(1)+'%', oe:oeD[i]==null?'—':oeD[i].toFixed(1)+'%'}));
+  } else if(m==='production'){
+    const pD=daySum(prodKey);
+    ddDatasets=[{label:'Production',data:pD,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:9,family:'DM Mono',weight:'700'},formatter:v=>v==null||v===0?'':v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)}}];
+    ddScales={y:{min:0}};
+    const tot=pD.filter(Boolean).reduce((a,b)=>a+b,0);
+    const avg=tot/(pD.filter(Boolean).length||1);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Total</div><div class="an-dd-kpi-val" style="color:var(--green)">${tot>=1000?(tot/1000).toFixed(1)+'k':Math.round(tot)}</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg/Day</div><div class="an-dd-kpi-val">${avg>=1000?(avg/1000).toFixed(1)+'k':Math.round(avg)}</div></div>`;
+    tableCols=['Date','Production'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, prod:pD[i]==null?'—':pD[i]>=1000?(pD[i]/1000).toFixed(1)+'k':Math.round(pD[i])}));
+  } else if(m==='uptime_adt'){
+    const upD=daySum(upKey||dtKey), adtD=daySum(affDtKey||dtKey);
+    ddDatasets=[
+      {label:'Uptime (Min)',data:upD,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+      {label:'Affected DT',data:adtD,type:'line',borderColor:'#dc2626',borderWidth:2,pointRadius:4,tension:.4,yAxisID:'y2',datalabels:{display:false}},
+    ];
+    ddScales={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const totUp=(upD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totADT=(adtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Total Uptime</div><div class="an-dd-kpi-val" style="color:var(--green)">${Math.round(totUp)} min</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Total Aff. DT</div><div class="an-dd-kpi-val" style="color:var(--red)">${Math.round(totADT)} min</div></div>`;
+    tableCols=['Date','Uptime (Min)','Affected DT (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, up:(upD[i]||0).toFixed(0), adt:(adtD[i]||0).toFixed(0)}));
+  } else if(m==='uptime_gdt'){
+    const upD=daySum(upKey||dtKey), gdtD=daySum(grossDTKey||dtKey);
+    ddDatasets=[
+      {label:'Uptime (Min)',data:upD,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'end',color:'#059669',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+      {label:'Gross DT',data:gdtD,type:'line',borderColor:'#dc2626',borderWidth:2,pointRadius:4,tension:.4,yAxisID:'y2',datalabels:{display:false}},
+    ];
+    ddScales={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const totUp=(upD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totGDT=(gdtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Total Uptime</div><div class="an-dd-kpi-val" style="color:var(--green)">${Math.round(totUp)} min</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Gross DT</div><div class="an-dd-kpi-val" style="color:var(--red)">${Math.round(totGDT)} min</div></div>`;
+    tableCols=['Date','Uptime (Min)','Gross DT (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, up:(upD[i]||0).toFixed(0), gdt:(gdtD[i]||0).toFixed(0)}));
+  } else if(m==='act_tgt'){
+    const gdtD=daySum(grossDTKey||dtKey), tgtD=daySum(grossDTTgtKey||dtKey), adtD=daySum(affDtKey||dtKey);
+    ddDatasets=[
+      {label:'Gross DT (Act)',data:gdtD,backgroundColor:'rgba(220,38,38,.65)',borderRadius:3,datalabels:{display:true,anchor:'end',align:'end',color:'#dc2626',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+      {label:'Gross DT (Tgt)',data:tgtD,type:'line',borderColor:'#d97706',borderWidth:2,borderDash:[5,4],pointRadius:3,tension:.3,datalabels:{display:false}},
+      {label:'Aff. DT',data:adtD,type:'line',borderColor:'#7c3aed',borderWidth:1.5,pointRadius:3,tension:.4,datalabels:{display:false}},
+    ];
+    ddScales={y:{min:0}};
+    const totGDT=(gdtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    const totTgt=(tgtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Act Gross DT</div><div class="an-dd-kpi-val" style="color:var(--red)">${Math.round(totGDT)}</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Tgt Gross DT</div><div class="an-dd-kpi-val" style="color:var(--amber)">${Math.round(totTgt)}</div></div>`;
+    tableCols=['Date','Gross DT Act','Gross DT Tgt','Aff. DT'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, gdt:(gdtD[i]||0).toFixed(0), tgt:(tgtD[i]||0).toFixed(0), adt:(adtD[i]||0).toFixed(0)}));
+  } else if(m==='mttr_mtbf'){
+    const mttrD=dayAvg(mttrKey), mtbfD=dayAvg(mtbfKey);
+    ddDatasets=[
+      {label:'MTTR (Min)',data:mttrD,backgroundColor:'rgba(124,58,237,.7)',borderRadius:3,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'end',color:'#a78bfa',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)}},
+      {label:'MTBF (Min)',data:mtbfD,backgroundColor:'rgba(8,145,178,.65)',borderRadius:3,yAxisID:'y2',datalabels:{display:true,anchor:'end',align:'end',color:'#22d3ee',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)}},
+    ];
+    ddScales={y:{min:0,position:'left'},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const avgMTTR=(mttrD||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((mttrD||[]).filter(Boolean).length||1);
+    const avgMTBF=(mtbfD||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((mtbfD||[]).filter(Boolean).length||1);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg MTTR</div><div class="an-dd-kpi-val" style="color:#7c3aed">${avgMTTR.toFixed(2)}</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg MTBF</div><div class="an-dd-kpi-val" style="color:#0891b2">${avgMTBF.toFixed(2)}</div></div>`;
+    tableCols=['Date','MTTR (Min)','MTBF (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, mttr:mttrD[i]==null?'—':mttrD[i].toFixed(2), mtbf:mtbfD[i]==null?'—':mtbfD[i].toFixed(2)}));
+  } else if(m==='loss'){
+    const dtD=daySum(dtKey), gdtD=daySum(grossDTKey||dtKey);
+    ddDatasets=[
+      {label:'Prod DT (Min)',data:dtD,backgroundColor:'rgba(239,68,68,.7)',borderRadius:3,datalabels:{display:true,anchor:'end',align:'end',color:'#dc2626',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+      {label:'Gross DT (Min)',data:gdtD,type:'line',borderColor:'#f97316',borderWidth:2,pointRadius:3,tension:.4,datalabels:{display:false}},
+    ];
+    ddScales={y:{min:0}};
+    const totDT=(dtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Total Prod DT</div><div class="an-dd-kpi-val" style="color:var(--red)">${Math.round(totDT)} min</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Days</div><div class="an-dd-kpi-val">${dayLabels.length}</div></div>`;
+    tableCols=['Date','Prod DT (Min)','Gross DT (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, dt:(dtD[i]||0).toFixed(0), gdt:(gdtD[i]||0).toFixed(0)}));
+  } else if(m==='breakdown'){
+    const bdTimeKey=getCol(r0,['BD Time','BDTime','Breakdown Time','BD Duration','BD Time (Min)']);
+    const dtD=daySum(bdTimeKey||dtKey);
+    ddDatasets=[{label:'BD Time (Min)',data:dtD,backgroundColor:'rgba(217,119,6,.7)',borderRadius:3,datalabels:{display:true,anchor:'end',align:'end',color:'#d97706',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}}];
+    ddScales={y:{min:0}};
+    const totBD=(dtD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Total BD Time</div><div class="an-dd-kpi-val" style="color:var(--amber)">${Math.round(totBD)} min</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Days w/ BD</div><div class="an-dd-kpi-val">${(dtD||[]).filter(v=>v>0).length}</div></div>`;
+    tableCols=['Date','BD Time (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, bd:(dtD[i]||0).toFixed(0)}));
+  } else if(m==='shop_perf'){
+    const leD=dayPct(leKey), pD=daySum(prodKey), dtD=daySum(dtKey);
+    ddDatasets=[
+      {label:'Line Eff %',data:leD,type:'line',borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:2,pointRadius:4,tension:.4,yAxisID:'y',datalabels:{display:true,anchor:'end',align:'top',color:'#d97706',font:{size:9,family:'DM Mono',weight:'600'},formatter:v=>v==null?'':v.toFixed(1)+'%'}},
+      {label:'Production',data:pD,backgroundColor:'rgba(0,51,153,.65)',borderRadius:3,yAxisID:'y2',datalabels:{display:true,anchor:'end',align:'end',color:'#1a56db',font:{size:8,family:'DM Mono',weight:'600'},formatter:v=>v==null||v===0?'':Math.round(v)}},
+      {label:'Prod DT',data:dtD,type:'line',borderColor:'#dc2626',borderWidth:1.5,pointRadius:2,tension:.4,yAxisID:'y2',datalabels:{display:false}},
+    ];
+    ddScales={y:{min:0,max:120,position:'left',ticks:{callback:v=>v+'%'}},y2:{min:0,position:'right',grid:{drawOnChartArea:false}}};
+    const avgLE=(leD||[]).filter(Boolean).reduce((a,b)=>a+b,0)/((leD||[]).filter(Boolean).length||1);
+    const totP=(pD||[]).filter(Boolean).reduce((a,b)=>a+b,0);
+    ddKpiHTML=`<div class="an-dd-kpi"><div class="an-dd-kpi-label">Avg Line Eff</div><div class="an-dd-kpi-val" style="color:var(--amber)">${avgLE.toFixed(1)}%</div></div>
+               <div class="an-dd-kpi"><div class="an-dd-kpi-label">Total Prod</div><div class="an-dd-kpi-val" style="color:var(--tata)">${Math.round(totP)}</div></div>`;
+    tableCols=['Date','Line Eff %','Production','Prod DT (Min)'];
+    tableRows=dayLabels.map((lbl,i)=>({date:lbl, le:leD[i]==null?'—':leD[i].toFixed(1)+'%', prod:(pD[i]||0).toFixed(0), dt:(dtD[i]||0).toFixed(0)}));
+  }
+
+  // Render KPIs
+  document.getElementById('an-dd-kpis').innerHTML = ddKpiHTML;
+
+  // Build scales
+  const ddScalesConfig={x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#64748b',font:{size:10},maxRotation:45},border:{color:'var(--border)'}}};
+  Object.entries(ddScales).forEach(([key,cfg])=>{
+    ddScalesConfig[key]={
+      ...cfg,
+      grid:key==='y'?{color:'rgba(0,0,0,.04)'}:{drawOnChartArea:false},
+      ticks:{color:'#64748b',font:{size:10,family:'DM Mono'},...(cfg.ticks||{})},
+      border:{color:'var(--border)'},
+      beginAtZero:true,
+      ...(cfg.position?{position:cfg.position}:{}),
+    };
+  });
+
+  // Render chart
+  const ddCtx = document.getElementById('an-dd-canvas');
+  _anDdChart = new Chart(ddCtx,{
+    type:'bar',
+    data:{labels:dayLabels, datasets:ddDatasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:500,easing:'easeOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',labels:{font:{size:10,family:'DM Mono'},color:'#64748b',boxWidth:10,padding:12}},
+        tooltip:{backgroundColor:'#0d1829',borderColor:'rgba(26,86,219,.25)',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#7a9ab8',padding:12,cornerRadius:8,bodyFont:{family:'DM Mono',size:11},titleFont:{family:'DM Mono',size:11,weight:'600'}},
+        datalabels:{clip:false}
+      },
+      layout:{padding:{top:24,right:10,bottom:4}},
+      scales:ddScalesConfig
+    }
+  });
+
+  // Render table
+  const vals = Object.values(tableRows[0]||{});
+  const keys = Object.keys(tableRows[0]||{});
+  document.getElementById('an-dd-table-wrap').innerHTML = tableRows.length?`
+    <table class="an-dd-table">
+      <thead><tr>${tableCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${tableRows.map(row=>`<tr>${Object.entries(row).map(([k,v],i)=>`<td class="${i>0?'num':''}">${v}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>`:`<div class="an-empty">No day-wise data available</div>`;
+
+  modal.classList.add('open');
+}
+
+function closeAnDrilldown(){
+  const modal = document.getElementById('an-drilldown');
+  modal.classList.remove('open');
+  if(_anDdChart){ _anDdChart.destroy(); _anDdChart=null; }
+}
+</script>
+</body>
+</html>
