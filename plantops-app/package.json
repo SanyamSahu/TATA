@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {"node": "20.x"},
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,7 +16,11 @@
     "react-dom": "latest",
     "recharts": "latest",
     "xlsx": "latest",
-    "lucide-react": "latest"
+    "lucide-react": "latest",
+    "react-is": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "latest",
+    "@vitejs/plugin-react": "latest"
+  }
 }

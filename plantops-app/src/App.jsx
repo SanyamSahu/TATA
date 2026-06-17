@@ -1492,7 +1492,7 @@ function MeetingDashboard({ entries, user }) {
 }
 
 function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
-  const reportDate = getYesterdayDateStr(selectedDate);
+  const reportDate = selectedDate;
   // Exact shop order from screenshot
   const order = [
     { shop: "TCF1", name: "TCF-1" },
