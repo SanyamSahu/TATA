@@ -19,8 +19,5 @@
     "lucide-react": "latest",
     "react-is": "latest"
   },
-  "devDependencies": {
-    "vite": "latest",
-    "@vitejs/plugin-react": "latest"
-  }
+  "devDependencies": {}
 }
