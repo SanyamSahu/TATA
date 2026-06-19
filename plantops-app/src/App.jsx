@@ -105,6 +105,25 @@ const LOSS_CATEGORIES = [
   { key: "lossOthers", label: "Others" },
 ];
 
+const LOSS_DETAIL_FIELD_CONFIG = {
+  lossShortages: { label: "Material / Part Description", placeholder: "Example: Mudliner stud / sheet metal", hasRemark: false },
+  lossQualityBIW: { label: "Defect / Material Description", placeholder: "Example: Mudliner stud missing", hasRemark: false },
+  lossBDMaintenance: { label: "Machine Name", placeholder: "Example: Trim 3 unload lift", hasRemark: true, remarkLabel: "Fault / Remark", remarkPlaceholder: "Example: Lift fault during loading" },
+  lossProcessOthers: { label: "Process / Operation Description", placeholder: "Example: Clutch pedal fitment operation", hasRemark: false },
+  lossEngine: { label: "Engine / Operation Description", placeholder: "Example: Engine supply delay", hasRemark: false },
+  lossPaint: { label: "Paint Process Description", placeholder: "Example: Paint booth stoppage", hasRemark: false },
+  lossPPC: { label: "PPC / Planning Description", placeholder: "Example: Schedule or part planning delay", hasRemark: false },
+  lossIPMS: { label: "IPMS / Material Description", placeholder: "Example: IPMS material issue", hasRemark: false },
+  lossHR: { label: "Manpower / Absenteeism Description", placeholder: "Example: Trim 1 operation delay due to absenteeism", hasRemark: false },
+  lossProject: { label: "Project / Activity Description", placeholder: "Example: Planned project activity", hasRemark: false },
+  lossTS: { label: "Tooling / Service Description", placeholder: "Example: Tool change delay", hasRemark: false },
+  lossOthers: { label: "Reason Description", placeholder: "Example: Safety presentation", hasRemark: false },
+};
+
+function lossDetailFieldConfig(lossKey) {
+  return LOSS_DETAIL_FIELD_CONFIG[lossKey] || { label: "Reason Description", placeholder: "Describe the reason", hasRemark: false };
+}
+
 const SHOP_LOSS_CONFIG = {
   TCF1: {
     categories: [
@@ -258,6 +277,10 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function configuredNumber(value, fallback) {
+  return value === "" || value == null ? fallback : toNumber(value, fallback);
+}
+
 function toText(value, fallback = "") {
   if (value == null) return fallback;
   return String(value);
@@ -335,7 +358,7 @@ function getSuggestedDateShift(now = new Date()) {
   if (minutes < 390) shift = "C";
   else if (minutes < 900) shift = "A";
   else if (minutes < 1410) shift = "B";
-  else { date = addDaysStr(date, 1); shift = "C"; }
+  else shift = "C";
   if (!isShiftAvailableOnDate(date, shift)) shift = availableShiftIds(date)[0] || "A";
   return { date, shift };
 }
@@ -415,20 +438,19 @@ function normalizeHourlyArray(value, shift, fallbackTotal = 0) {
 function calcDerived(entry) {
   const actual = toNumber(entry.actualProduction);
   const available = toNumber(entry.timeAvailable);
-  const cycle = toNumber(entry.cycleTimeSec || shopConfig(entry.shop).cycleTimeSec);
-  const pr = 1.0;
-  const qr = getFixedQR(entry.shop);
+  const cycle = configuredNumber(entry.cycleTimeSec, shopConfig(entry.shop).cycleTimeSec);
+  const pr = configuredNumber(entry.pr, 1.0);
+  const qr = configuredNumber(entry.qr, getFixedQR(entry.shop));
   const bd = toNumber(entry.bdOccurrence);
   const capacity = available > 0 && cycle > 0 ? Math.round((available * 60) / cycle) : 0;
   const productionTime = actual > 0 && cycle > 0 ? round1((actual * cycle) / 60) : 0;
   const netDt = Math.max(round1(available - productionTime), 0);
-  // Total loss time remains production-derived. Category inputs only explain
-  // where that loss occurred and must not change the operational calculation.
+  // Production-derived time and reported loss categories are independent records.
   const lossTime = netDt;
   const ar = available ? round2(productionTime / available) : 0;
   const oePct = round1(ar * pr * qr * 100);
   const lePct = capacity ? Math.round((actual / capacity) * 100) : 0;
-  const affectedDowntime = lossTime;
+  const affectedDowntime = toNumber(entry.affectedDowntime);
   const operatingTime = Math.max(available - affectedDowntime, 0);
   const mttr = bd ? round1(affectedDowntime / bd) : 0;
   const mtbfHrs = bd ? round1(operatingTime / (bd * 60)) : 0;
@@ -442,8 +464,8 @@ function normalizeEntry(raw) {
   const date = dateOnly(entry.date);
   const shift = normalizeShift(entry.shift) || availableShiftIds(date)[0] || "A";
   const cfg = shopConfig(shop);
-  const pr = 1.0;
-  const qr = getFixedQR(shop);
+  const pr = configuredNumber(entry.pr, 1.0);
+  const qr = configuredNumber(entry.qr, getFixedQR(shop));
   const normalized = {
     id: entry.id || buildKey({ date, shop, shift }),
     date,
@@ -456,13 +478,15 @@ function normalizeEntry(raw) {
     repName: toText(entry.repName || `${cfg.displayName} Representative`),
     actualProduction: toNumber(entry.actualProduction),
     timeAvailable: toNumber(entry.timeAvailable),
-    cycleTimeSec: toNumber(entry.cycleTimeSec || cfg.cycleTimeSec),
+    cycleTimeSec: configuredNumber(entry.cycleTimeSec, cfg.cycleTimeSec),
     pr: pr,
     qr: qr,
     bdOccurrence: toNumber(entry.bdOccurrence),
-    affectedDowntime: toNumber(entry.affectedDowntime),
-    grossDowntime: toNumber(entry.grossDowntime),
-    grossDTTarget: toNumber(entry.grossDTTarget || cfg.grossDTTarget),
+    affectedDowntime: toNumber(entry.affectedDowntime ?? entry.affectedDTmin),
+    grossDowntime: toNumber(entry.grossDowntime ?? entry.grossDTmin),
+    grossDTTarget: configuredNumber(entry.grossDTTarget, cfg.grossDTTarget),
+    affectedDTmin: toNumber(entry.affectedDTmin),
+    grossDTmin: toNumber(entry.grossDTmin),
     majorBreakdown: toText(entry.majorBreakdown || entry.breakdownDetails),
     safetyIssue: toText(entry.safetyIssue),
     sparesConsumed: toText(entry.sparesConsumed),
@@ -472,14 +496,13 @@ function normalizeEntry(raw) {
     lastUpdatedAt: toText(entry.lastUpdatedAt),
   };
   LOSS_CATEGORIES.forEach((item) => { normalized[item.key] = toNumber(entry[item.key]); });
-  const d = calcDerived(normalized);
   normalized.hourlyPlan = normalizeHourlyArray(
     entry.hourlyPlan,
     shift,
     plannedCapacity(shift, normalized.cycleTimeSec),
   );
   normalized.hourlyActual = normalizeHourlyArray(entry.hourlyActual, shift, 0);
-  return { ...normalized, ...calcDerived(normalized), affectedDowntime: d.lossTime, grossDowntime: d.lossTime };
+  return { ...normalized, ...calcDerived(normalized) };
 }
 
 function readJson(key, fallback) {
@@ -959,7 +982,7 @@ function Login({ onLogin }) {
 function Nav({ user, tab, setTab, onLogout }) {
   const tabs = user.role === "admin"
     ? ["dashboard", "meetingDashboard", "lossData", "dailyReview", "analytics", "settings"]
-    : ["submit", "meetingDashboard", "lossDataAnalytics"];
+    : ["submit"];
   const labels = {
     dashboard: "Main Dashboard",
     meetingDashboard: "Data Store",
@@ -968,7 +991,6 @@ function Nav({ user, tab, setTab, onLogout }) {
     analytics: "Analytical Sheet",
     settings: "Settings",
     submit: "Input Form",
-    lossDataAnalytics: "Loss and Meeting Data",
   };
   return <div className="app-nav" style={S.nav}>
     <div><div style={S.brand}>TATA MOTORS Operations Portal</div><div style={{ ...S.subtle, fontSize: 11 }}>{user.role === "admin" ? "Admin Console" : `${user.shop} · All shifts`}</div></div>
@@ -984,7 +1006,7 @@ function StatusLine({ gasUrl, lastSync, syncError, onRefresh, syncing }) {
   const nextRefreshIn = lastSync ? Math.max(0, 30 - ((secsAgo || 0) % 30)) : null;
   return <div className="status-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16, padding: "12px 16px", background: "rgba(255,255,255,0.9)", borderRadius: 14, border: "1px solid #e2e9f5", boxShadow: "0 6px 16px rgba(40,73,118,.08)" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-      {gasUrl ? <span style={S.badge("green")}>● Live</span> : <span style={S.badge("orange")}>⚠ Add GAS URL in Settings</span>}
+      {gasUrl ? <span style={S.badge("green")}>● Live</span> : <span style={S.badge("orange")}>⚠ Backend URL not configured</span>}
       {syncing && <span style={{ fontSize: 12, color: "#2563eb", fontWeight: 700 }}>↻ Syncing…</span>}
       {lastSync && !syncing && <span style={{ fontSize: 12, color: "#63708a" }}>Last sync: {new Date(lastSync).toLocaleTimeString()} · {secsAgo < 5 ? "just now" : `${secsAgo}s ago`}</span>}
       {nextRefreshIn !== null && !syncing && <span style={{ fontSize: 11, color: "#94a3b8" }}>Auto-refresh in {nextRefreshIn}s</span>}
@@ -1008,7 +1030,9 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
     return { ...normalizeEntry({
       date: suggested.date, shop: user.shop, shift: initialShift, repName: user.repName,
       actualProduction: existing?.actualProduction || "",
-      pr: existing?.pr || 1, qr: existing?.qr || 1, bdOccurrence: existing?.bdOccurrence || "",
+      pr: existing?.pr ?? 1, qr: existing?.qr ?? getFixedQR(user.shop), bdOccurrence: existing?.bdOccurrence || "",
+      affectedDTmin: existing?.affectedDTmin || "",
+      grossDTmin: existing?.grossDTmin || "",
       ...Object.fromEntries(LOSS_CATEGORIES.map(({ key }) => [key, existing?.[key] || ""])),
       lossDetails: existing?.lossDetails || {},
       hourlyActual,
@@ -1025,12 +1049,12 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
   const canEditSelected = !selectedExisting || isEditAllowed(selectedExisting.date, selectedExisting.shift);
   const shiftAllowed = isShiftAvailableOnDate(form.date, selectedShift);
   const calculatedTimeAvailable = calculatedAvailableTime(selectedShift, form.hourlyActual);
-  const preview = normalizeEntry({ ...form, shift: selectedShift, timeAvailable: calculatedTimeAvailable, cycleTimeSec: cfg.cycleTimeSec, grossDTTarget: cfg.grossDTTarget });
+  const activeCycleTimeSec = configuredNumber(form.cycleTimeSec, cfg.cycleTimeSec);
+  const activeGrossDTTarget = configuredNumber(form.grossDTTarget, cfg.grossDTTarget);
   const shopLossCategories = lossCategoriesForShop(user.shop);
   const allocatableLossCategories = shopLossCategories;
   const manuallyAllocatedLoss = allocatableLossCategories.reduce((sum, item) => sum + toNumber(form[item.key]), 0);
-  const remainingLoss = Math.max(round1(preview.lossTime - manuallyAllocatedLoss), 0);
-  const plan = defaultHourlyPlan(plannedCapacity(selectedShift, cfg.cycleTimeSec), selectedShift);
+  const plan = defaultHourlyPlan(plannedCapacity(selectedShift, activeCycleTimeSec), selectedShift);
   const shiftsForDate = availableShiftIds(form.date);
 
   function loadFormFor(dateValue, shiftValue) {
@@ -1039,7 +1063,7 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
     const found = entries.find((e) => e.date === cleanDate && e.shop === user.shop && e.shift === cleanShift);
     const hourlyActual = editableHourlyActual(found?.hourlyActual, cleanShift);
     if (found) setForm({ ...normalizeEntry({ ...found, hourlyActual, repName: found.repName || user.repName }), hourlyActual });
-    else setForm({ ...normalizeEntry({ date: cleanDate, shop: user.shop, shift: cleanShift, repName: user.repName, pr: 1, qr: 1, hourlyActual }), hourlyActual });
+    else setForm({ ...normalizeEntry({ date: cleanDate, shop: user.shop, shift: cleanShift, repName: user.repName, pr: 1, qr: getFixedQR(user.shop), hourlyActual }), hourlyActual });
   }
   function change(key, value) { setForm((current) => ({ ...current, [key]: value })); }
   function changeDate(value) { loadFormFor(value, selectedShift); }
@@ -1080,57 +1104,61 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
   async function submit(e) {
     e.preventDefault();
     setSaving(true); setMessage(""); setError("");
-    // Build payload first so we can do optimistic update immediately
     let payload;
     try {
       if (!form.date) throw new Error("Date is required.");
       if (!selectedShift) throw new Error("Shift is required.");
       if (!isShiftAvailableOnDate(form.date, selectedShift)) throw new Error(`Shift ${selectedShift} is not available for ${form.date}. Sunday has only Shift A/B and Monday has no Shift C.`);
       if (form.actualProduction === "") throw new Error("Actual Production is required.");
-      const repairDowntime = toNumber(form.lossBDMaintenance);
+      if (form.affectedDTmin === "") throw new Error("Affected DT(min) is required.");
+      if (form.grossDTmin === "") throw new Error("Gross DT (min) is required.");
+      if (form.bdOccurrence === "") throw new Error("BD occurance is required.");
+      const affectedDtMinVal = toNumber(form.affectedDTmin);
       const failureCount = toNumber(form.bdOccurrence);
-      if (manuallyAllocatedLoss > preview.lossTime) throw new Error(`Loss category allocation (${manuallyAllocatedLoss} min) cannot exceed calculated Loss Time (${preview.lossTime} min).`);
       for (const loss of allocatableLossCategories) {
         const categoryMinutes = toNumber(form[loss.key]);
         if (categoryMinutes <= 0) continue;
         const rows = form.lossDetails?.[loss.key] || [];
-        if (!rows.length) throw new Error(`Add machine-wise details for ${loss.label}.`);
+        const fieldConfig = lossDetailFieldConfig(loss.key);
+        if (!rows.length) throw new Error(`Add detail rows for ${loss.label}.`);
         if (rows.some((row) => !toText(row.machine).trim() || toNumber(row.minutes) <= 0)) {
-          throw new Error(`Complete the Machine / Description and Time fields for ${loss.label}.`);
+          throw new Error(`Complete the ${fieldConfig.label} and Time fields for ${loss.label}.`);
+        }
+        if (fieldConfig.hasRemark && rows.some((row) => !toText(row.remarks).trim())) {
+          throw new Error(`Enter the Fault / Remark for each ${loss.label} detail.`);
         }
         const detailedMinutes = lossDetailTotal(form.lossDetails, loss.key);
         if (Math.abs(detailedMinutes - categoryMinutes) > 0.01) {
-          throw new Error(`${loss.label} details total (${detailedMinutes} min) must equal the entered loss (${categoryMinutes} min).`);
+          throw new Error(`${loss.label} sum is not matching with the input row wise sum.`);
         }
       }
-      if (repairDowntime > 0 && failureCount <= 0) throw new Error("Enter Number of Failures when Repair Downtime is greater than 0.");
+      if (affectedDtMinVal > 0 && failureCount <= 0) throw new Error("Enter BD occurance when Affected DT(min) is greater than 0.");
       if (!gasUrl) throw new Error("Google Apps Script URL is missing. Add it in Settings or .env first.");
       if (selectedExisting && !canEditSelected) throw new Error(`Editing is locked for this report. Deadline was ${deadlineLabel(selectedExisting.date, selectedExisting.shift)}.`);
       const now = new Date().toISOString();
-      payload = normalizeEntry({ ...form, shift: selectedShift, timeAvailable: calculatedTimeAvailable, cycleTimeSec: cfg.cycleTimeSec, grossDTTarget: cfg.grossDTTarget, hourlyPlan: plan, submittedBy: user.username, submittedAt: selectedExisting?.submittedAt || now, lastUpdatedAt: now });
+      payload = normalizeEntry({ ...form, shift: selectedShift, timeAvailable: calculatedTimeAvailable, cycleTimeSec: activeCycleTimeSec, grossDTTarget: activeGrossDTTarget, hourlyPlan: plan, submittedBy: user.username, submittedAt: selectedExisting?.submittedAt || now, lastUpdatedAt: now });
+
     } catch (err) {
       setError(err.message || String(err)); setSaving(false); return;
     }
 
-    // ── STEP 1: Optimistic local update — UI reflects data INSTANTLY ──
     const optimisticEntries = upsertLocal(entries, payload);
     setEntries(optimisticEntries);
     writeJson(LS_KEYS.ENTRIES, optimisticEntries);
     setMessage("⏳ Saving to Google Sheets…");
 
-    // ── STEP 2: Save to Google Sheets via Apps Script ──
     try {
       const result = await apiPost(gasUrl, { action: "saveReport", report: payload });
       const confirmedEntry = normalizeEntry(result.entry || payload);
       const confirmedEntries = upsertLocal(optimisticEntries, confirmedEntry);
       setEntries(confirmedEntries);
       writeJson(LS_KEYS.ENTRIES, confirmedEntries);
-      setMessage(`✅ ${result.mode === "updated" ? "Updated" : "Saved"} in Google Sheets! Dashboards updated.`);
+      setMessage(result.rebuildWarning
+        ? `✅ ${result.mode === "updated" ? "Updated" : "Saved"} in Google Sheets. ${result.rebuildWarning}`
+        : `✅ ${result.mode === "updated" ? "Updated" : "Saved"} in Google Sheets! Dashboards updated.`);
 
-      // ── STEP 3: Full re-sync from server (gets admin's view in sync too) ──
       if (onRefresh) { try { await onRefresh(); } catch (_) {} }
     } catch (err) {
-      // Optimistic update already happened — show warning but don't undo
       setMessage("");
       setError(`⚠️ Saved locally but failed to reach Google Sheets: ${err.message}. Check your GAS URL in Settings.`);
     } finally { setSaving(false); }
@@ -1138,7 +1166,7 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
 
   return <div className="ui-card feature-card" style={S.card}>
     <h2 style={S.title}>Shop Data Entry</h2>
-    <p style={S.subtle}>{cfg.displayName} · {SHIFT_TIME[selectedShift] || "Select shift"}. All shops submit for all available shifts. Sunday has only Shift A/B; Monday has no Shift C. Cycle time and gross downtime target are fixed from master config.</p>
+    <p style={S.subtle}>{cfg.displayName} · {SHIFT_TIME[selectedShift] || "Select shift"}.</p>
     {message && <div style={S.ok}>{message}</div>}{error && <div style={S.error}>{error}</div>}
     {!shiftAllowed && <div style={S.error}>Shift {selectedShift} is not available for this date. Choose one of: {shiftsForDate.join(", ")}.</div>}
     {selectedExisting && canEditSelected && <div style={{ ...S.ok, background: "#fffbeb", borderColor: "#fbbf24", color: "#92400e" }}>A report already exists for this Date + Shop + Shift. Submitting again updates the same report. Edit deadline: {deadlineLabel(selectedExisting.date, selectedExisting.shift)}.</div>}
@@ -1149,22 +1177,22 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
         <div><label style={S.label}>Shop</label><input style={S.input} value={cfg.displayName} disabled /></div>
         <div><label style={S.label}>Shift</label><select style={S.input} value={selectedShift} onChange={(e) => changeShift(e.target.value)}>{shiftsForDate.map((shift) => <option key={shift} value={shift}>Shift {shift} / {shiftCode(shift)} · {SHIFT_TIME[shift]}</option>)}</select></div>
         <div><label style={S.label}>Representative</label><input style={S.input} value={form.repName} onChange={(e) => change("repName", e.target.value)} /></div>
-        <div><label style={S.label}>Fixed Cycle Time (Sec)</label><input style={S.input} value={cfg.cycleTimeSec} disabled /></div>
-        <div><label style={S.label}>Fixed Gross DT / Yearly Target</label><input style={S.input} value={cfg.grossDTTarget} disabled /></div>
+        <div><label style={S.label}>Cycle time (sec)</label><input style={S.input} value={activeCycleTimeSec} disabled /></div>
+        <div><label style={S.label}>Gross DT Target/month (min)</label><input style={S.input} value={activeGrossDTTarget} disabled /></div>
         <div><label style={S.label}>Actual Production *</label><input style={S.input} type="number" value={form.actualProduction} onChange={(e) => change("actualProduction", e.target.value)} /></div>
-        <div><label style={S.label}>Calculated Actual Time (Min)</label><input style={S.input} type="number" value={calculatedTimeAvailable} disabled /></div>
       </div>
 
       <div className="form-section" style={{ marginTop: 20, padding: 18, border: "2px solid #bfdbfe", borderRadius: 18, background: "linear-gradient(135deg, #eff6ff, #ffffff)" }}>
         <div style={S.cardTitle}>Maintenance Reliability Inputs</div>
         <div style={{ ...S.grid(210), marginTop: 14 }}>
-          <div><label style={S.label}>Repair Downtime (Min) *</label><input style={S.input} type="number" min="0" value={form.lossBDMaintenance} onChange={(e) => changeLossValue("lossBDMaintenance", e.target.value)} placeholder="Example: 60" /></div>
-          <div><label style={S.label}>Number of Failures *</label><input style={S.input} type="number" min="0" step="1" value={form.bdOccurrence} onChange={(e) => change("bdOccurrence", e.target.value)} placeholder="Example: 2" /></div>
+          <div><label style={S.label}>Affected DT(min) *</label><input style={S.input} type="number" min="0" value={form.affectedDTmin} onChange={(e) => change("affectedDTmin", e.target.value)} placeholder="Example: 60" /></div>
+          <div><label style={S.label}>Gross DT (min) *</label><input style={S.input} type="number" min="0" value={form.grossDTmin} onChange={(e) => change("grossDTmin", e.target.value)} placeholder="Example: 60" /></div>
+          <div><label style={S.label}>BD occurance *</label><input style={S.input} type="number" min="0" step="1" value={form.bdOccurrence} onChange={(e) => change("bdOccurrence", e.target.value)} placeholder="Example: 2" /></div>
         </div>
       </div>
 
       <div className="form-section" style={{ marginTop: 20, padding: 18, border: "2px solid #bbf7d0", borderRadius: 18, background: "linear-gradient(135deg, #f0fdf4, #ffffff)" }}>
-        <div style={S.cardTitle}>Hourly Production Inputs</div>
+        <div style={S.cardTitle}>Hourly Production chart</div>
         <div style={{ ...S.tableWrap, marginTop: 14 }}><table style={{ ...S.table, minWidth: 940 }}><thead><tr><th style={S.th}>Hours</th>{slots.map((slot) => <th key={slot} style={S.th}>{slot}</th>)}<th style={S.th}>Total</th></tr></thead><tbody><tr><td style={S.td}>Plan</td>{plan.map((v, i) => <td key={i} style={S.td}>{v}</td>)}<td style={S.td}>{plan.reduce((a, b) => a + b, 0)}</td></tr><tr><td style={S.td}>Actual</td>{slots.map((slot, i) => <td key={slot} style={S.td}><input style={{ ...S.input, minWidth: 80 }} type="number" value={form.hourlyActual?.[i] ?? ""} onChange={(e) => changeHourly(i, e.target.value)} /></td>)}<td style={S.td}>{(form.hourlyActual || []).reduce((a, b) => a + toNumber(b), 0)}</td></tr></tbody></table></div>
       </div>
 
@@ -1192,18 +1220,20 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                       <div>
                         <div style={S.cardTitle}>{loss.label} Usage Details</div>
-                        <div style={S.subtle}>Specify which machine or activity consumed the entered time.</div>
                       </div>
                       <button type="button" style={S.btn()} onClick={() => addLossDetail(loss.key)}><Plus size={15} /> Add Row</button>
                     </div>
-                    {rows.map((row, index) => (
-                      <div className="loss-detail-row" key={`${loss.key}-${index}`}>
-                        <div><label style={S.label}>Machine / Description *</label><input style={S.input} value={row.machine ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "machine", e.target.value)} placeholder="Example: Robot 4 / Conveyor" /></div>
-                        <div><label style={S.label}>Time (Min) *</label><input style={S.input} type="number" min="0" value={row.minutes ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "minutes", e.target.value)} /></div>
-                        <div><label style={S.label}>Remarks</label><input style={S.input} value={row.remarks ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "remarks", e.target.value)} placeholder="Optional reason or action taken" /></div>
-                        <button type="button" aria-label={`Remove ${loss.label} detail ${index + 1}`} style={{ ...S.btn("danger"), minWidth: 46, padding: 11 }} onClick={() => removeLossDetail(loss.key, index)}><Trash2 size={16} /></button>
-                      </div>
-                    ))}
+                    {rows.map((row, index) => {
+                      const fieldConfig = lossDetailFieldConfig(loss.key);
+                      return (
+                        <div className="loss-detail-row" key={`${loss.key}-${index}`} style={{ gridTemplateColumns: fieldConfig.hasRemark ? "minmax(190px, 1.1fr) minmax(130px, .45fr) minmax(220px, 1.4fr) auto" : "minmax(260px, 1.5fr) minmax(130px, .45fr) auto" }}>
+                          <div><label style={S.label}>{fieldConfig.label} *</label><input style={S.input} value={row.machine ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "machine", e.target.value)} placeholder={fieldConfig.placeholder} /></div>
+                          <div><label style={S.label}>Time (Min) *</label><input style={S.input} type="number" min="0" value={row.minutes ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "minutes", e.target.value)} /></div>
+                          {fieldConfig.hasRemark && <div><label style={S.label}>{fieldConfig.remarkLabel} *</label><input style={S.input} value={row.remarks ?? ""} onChange={(e) => changeLossDetail(loss.key, index, "remarks", e.target.value)} placeholder={fieldConfig.remarkPlaceholder} /></div>}
+                          <button type="button" aria-label={`Remove ${loss.label} detail ${index + 1}`} style={{ ...S.btn("danger"), minWidth: 46, padding: 11 }} onClick={() => removeLossDetail(loss.key, index)}><Trash2 size={16} /></button>
+                        </div>
+                      );
+                    })}
                     <div className="loss-detail-summary" style={{ color: matches ? "#166534" : "#9f1239", background: matches ? "#f0fdf4" : "#fff1f2", border: `1px solid ${matches ? "#bbf7d0" : "#fecdd3"}` }}>
                       <span>Entered Loss: <strong>{categoryMinutes} min</strong></span>
                       <span>Detailed Time: <strong>{detailedMinutes} min</strong></span>
@@ -1215,14 +1245,12 @@ function RepSubmit({ user, gasUrl, entries, setEntries, onRefresh }) {
             );
           })}
         </div>
-        <div className="loss-allocation-summary" style={{ ...S.ok, background: manuallyAllocatedLoss > preview.lossTime ? "#fff1f2" : "#f0fdf4", borderColor: manuallyAllocatedLoss > preview.lossTime ? "#fda4af" : "#bbf7d0", color: manuallyAllocatedLoss > preview.lossTime ? "#9f1239" : "#166534" }}>
-          <span className="loss-summary-item">Calculated <strong>{preview.lossTime} min</strong></span>
-          <span className="loss-summary-item">Allocated <strong>{manuallyAllocatedLoss} min</strong></span>
-          <span className="loss-summary-item">Remaining <strong>{remainingLoss} min</strong></span>
+        <div className="loss-allocation-summary" style={{ ...S.ok, background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
+          <span className="loss-summary-item">Reported loss categories <strong>{manuallyAllocatedLoss} min</strong></span>
         </div>
       </div>
 
-      <div className="form-details"><div style={S.cardTitle}>Details — multiline is preserved in Google Sheets</div><div style={S.grid(300)}><div><label style={S.label}>BD / Breakdown Details</label><textarea rows={5} style={{ ...S.input, resize: "vertical" }} value={form.majorBreakdown} onChange={(e) => change("majorBreakdown", e.target.value)} placeholder="Each point on a new line" /></div><div><label style={S.label}>Safety Issue</label><textarea rows={5} style={{ ...S.input, resize: "vertical" }} value={form.safetyIssue} onChange={(e) => change("safetyIssue", e.target.value)} /></div><div><label style={S.label}>Spares Consumed</label><textarea rows={5} style={{ ...S.input, resize: "vertical" }} value={form.sparesConsumed} onChange={(e) => change("sparesConsumed", e.target.value)} /></div></div></div>
+      <div className="form-details"><div style={S.cardTitle}>Details</div><div style={S.grid(300)}><div><label style={S.label}>Safety Issue</label><textarea rows={5} style={{ ...S.input, resize: "vertical" }} value={form.safetyIssue} onChange={(e) => change("safetyIssue", e.target.value)} /></div><div><label style={S.label}>Spares Consumed</label><textarea rows={5} style={{ ...S.input, resize: "vertical" }} value={form.sparesConsumed} onChange={(e) => change("sparesConsumed", e.target.value)} /></div></div></div>
 
       <button className="primary-action" disabled={saving || !canEditSelected || !shiftAllowed} style={{ ...S.btn("primary"), marginTop: 22, opacity: saving || !canEditSelected || !shiftAllowed ? 0.6 : 1 }} type="submit"><UploadCloud size={15} /> {saving ? "Saving..." : selectedExisting ? "Update Corrected Data" : "Submit Data"}</button>
     </form>
@@ -1417,16 +1445,9 @@ function MeetingCumulativeTable({ entries, selectedDate }) {
 }
 
 function MeetingDashboard({ entries, user }) {
-  const [selectedDate, setSelectedDate] = useState(() => latestEntryDate(entries));
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedShop, setSelectedShop] = useState(user.role === "admin" ? "ALL" : user.shop);
   const [viewMode, setViewMode] = useState("single"); // "single" | "cumulative"
-  const newestDate = latestEntryDate(entries);
-
-  useEffect(() => {
-    if (entries.length && !entries.some((entry) => dateOnly(entry.date) === selectedDate)) {
-      setSelectedDate(newestDate);
-    }
-  }, [entries, newestDate, selectedDate]);
 
   const filtered = entries.map(normalizeEntry).filter((e) =>
     (!selectedDate || e.date === selectedDate) &&
@@ -1491,8 +1512,8 @@ function MeetingDashboard({ entries, user }) {
   </>;
 }
 
-function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
-  const reportDate = selectedDate;
+function buildDailyReviewRows(entries, meetingDate, selectedShift = "all") {
+  const reportDate = getYesterdayDateStr(meetingDate);
   // Exact shop order from screenshot
   const order = [
     { shop: "TCF1", name: "TCF-1" },
@@ -1509,6 +1530,11 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
   ];
 
   return order.map((item, index) => {
+    const targetShifts = selectedShift === "all" ? availableShiftIds(meetingDate) : [selectedShift];
+    const productionTarget = targetShifts.reduce(
+      (total, shift) => total + plannedCapacity(shift, shopConfig(item.shop).cycleTimeSec),
+      0
+    );
     const shopEntries = entries.map(normalizeEntry).filter((e) => {
       if (e.date !== reportDate || e.shop !== item.shop) return false;
       if (selectedShift !== "all" && e.shift !== selectedShift) return false;
@@ -1521,7 +1547,7 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
         sn: index + 1,
         shop: item.name,
         safetyIssue: "Nil",
-        productionTarget: "",
+        productionTarget,
         yesterdayActualProduction: "",
         affectedDowntime: "",
         grossDowntime: "",
@@ -1533,7 +1559,6 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
     }
 
     let safetyIssues = [];
-    let targets = 0;
     let actuals = 0;
     let affectedDt = 0;
     let grossDt = 0;
@@ -1548,7 +1573,6 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
       if (safetyIssue && safetyIssue.toLowerCase() !== "nil") {
         safetyIssues.push(safetyIssue);
       }
-      targets += toNumber(e.capacity);
       actuals += toNumber(e.actualProduction);
       affectedDt += toNumber(e.affectedDowntime);
       grossDt += toNumber(e.grossDowntime);
@@ -1570,7 +1594,7 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
       sn: index + 1,
       shop: item.name,
       safetyIssue: finalSafety,
-      productionTarget: targets > 0 ? targets : "",
+      productionTarget,
       yesterdayActualProduction: actuals > 0 ? actuals : "",
       affectedDowntime: affectedDt > 0 ? affectedDt : "",
       grossDowntime: grossDt > 0 ? grossDt : "",
@@ -1583,21 +1607,11 @@ function buildDailyReviewRows(entries, selectedDate, selectedShift = "all") {
 }
 
 function DailyReviewDashboard({ entries, user }) {
-  const [selectedDate, setSelectedDate] = useState(() => latestDailyReviewDate(entries));
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedShift, setSelectedShift] = useState("all");
   const filtered = entries.map(normalizeEntry);
-  const newestReviewDate = latestDailyReviewDate(filtered);
   const yesterdayDateStr = getYesterdayDateStr(selectedDate);
   const hasYesterdayData = filtered.some((entry) => entry.date === yesterdayDateStr);
-  const previousNewestReviewDateRef = useRef(newestReviewDate);
-
-  useEffect(() => {
-    const followedPreviousDefault = selectedDate === previousNewestReviewDateRef.current;
-    if (filtered.length && (followedPreviousDefault || !hasYesterdayData)) {
-      setSelectedDate(newestReviewDate);
-    }
-    previousNewestReviewDateRef.current = newestReviewDate;
-  }, [filtered, newestReviewDate, hasYesterdayData, selectedDate]);
 
   const rows = buildDailyReviewRows(filtered, selectedDate, selectedShift);
 
@@ -1639,7 +1653,7 @@ function DailyReviewDashboard({ entries, user }) {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "end" }}>
         <div>
           <h2 style={S.title}>Meeting Sheet</h2>
-          <p style={S.subtle}>Select the meeting date. Production, downtime, breakdown, safety, and spares are loaded from the previous day's submitted reports.</p>
+          <p style={S.subtle}>Today’s production target is calculated from the configured shop cycle time. Actuals, downtime, breakdown, safety, and spares are loaded from the previous day’s submitted reports.</p>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "end" }}>
           <div>
@@ -1669,7 +1683,7 @@ function DailyReviewDashboard({ entries, user }) {
         <MetricCard label="Total DT Min" value={totalDt} tone="danger" />
         <MetricCard label="DT Occurrence" value={totalOcc} tone="warning" />
       </div>
-      {!hasYesterdayData && <div style={{ ...S.error, marginTop: 16 }}>No submitted reports were found for {formatDotDate(yesterdayDateStr)}. Choose the day after a submitted report date.</div>}
+      {!hasYesterdayData && <div style={{ ...S.error, marginTop: 16 }}>No submitted reports were found for the data date {formatDotDate(yesterdayDateStr)}.</div>}
     </div>
 
     <div className="ui-card" style={S.card}>
@@ -1717,7 +1731,7 @@ function DailyReviewDashboard({ entries, user }) {
                 <td style={{ ...cellStyle, textAlign: "center", background: "#fefcf0", fontWeight: "bold" }}>{row.yesterdayActualProduction}</td>
                 <td style={{ ...cellStyle, textAlign: "center" }}>{row.affectedDowntime}</td>
                 <td style={{ ...cellStyle, textAlign: "center" }}>{row.grossDowntime}</td>
-                <td style={{ ...cellStyle, textAlign: "center", background: "#fff5f5" }}>{row.affectedDowntimeOccurrence}</td>
+                <td style={{ ...cellStyle, textAlign: "center", background: "#ffffff" }}>{row.affectedDowntimeOccurrence}</td>
                 <td style={{ ...cellStyle, textAlign: "center", fontWeight: "bold" }}>{row.totalDownTime || ""}</td>
                 <td style={{ ...cellStyle, color: "#0f172a" }}>{row.majorBreakdown || "No major downtime"}</td>
                 <td style={{ ...cellStyle, color: isSparesNo ? "#64748b" : "#0f172a", fontWeight: isSparesNo ? "normal" : "bold" }}>{sparesConsumed}</td>
@@ -1840,15 +1854,8 @@ function DashboardHero() {
 }
 
 function Dashboard({ entries }) {
-  const [date, setDate] = useState(() => latestEntryDate(entries));
+  const [date, setDate] = useState(todayStr);
   const normalized = entries.map(normalizeEntry);
-  const newestDate = latestEntryDate(normalized);
-
-  useEffect(() => {
-    if (normalized.length && !normalized.some((entry) => entry.date === date)) {
-      setDate(newestDate);
-    }
-  }, [normalized, newestDate, date]);
 
   const dayEntries = normalized.filter((e) => e.date === date);
   const requiredShifts = availableShiftIds(date);
@@ -2080,16 +2087,9 @@ async function exportMeetingWorkbook(entries, activeSingleEntry = null, selected
 
 // ── LOSS DATA DASHBOARD ───────────────────────────────────────
 function LossDataSingleView({ entries, user }) {
-  const [selectedDate, setSelectedDate] = useState(() => latestEntryDate(entries));
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedShop, setSelectedShop] = useState(user.role === "admin" ? "ALL" : user.shop);
   const [selectedShift, setSelectedShift] = useState("ALL");
-  const newestDate = latestEntryDate(entries);
-
-  useEffect(() => {
-    if (entries.length && !entries.some((entry) => dateOnly(entry.date) === selectedDate)) {
-      setSelectedDate(newestDate);
-    }
-  }, [entries, newestDate, selectedDate]);
 
   const filtered = entries.map(normalizeEntry).filter((e) =>
     (!selectedDate || e.date === selectedDate) &&
@@ -2182,7 +2182,7 @@ function LossDataSingleView({ entries, user }) {
 }
 
 function LossDataCumulativeView({ entries, user }) {
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedShop, setSelectedShop] = useState(user.role === "admin" ? "ALL" : user.shop);
   const [groupBy, setGroupBy] = useState("shop"); // "shop" | "month" | "shift"
 
@@ -2294,7 +2294,7 @@ function LossDataCumulativeView({ entries, user }) {
 }
 
 function LossDataMergedView({ entries, user }) {
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedShop, setSelectedShop] = useState(user.role === "admin" ? "ALL" : user.shop);
   const [selectedShift, setSelectedShift] = useState("ALL");
 
@@ -2426,6 +2426,19 @@ function SettingsPage({ gasUrl, setGasUrl, user, onRefresh, entries, setEntries 
     setError("");
   }
 
+  function useDeploymentUrl() {
+    if (!DEFAULT_GAS_URL) {
+      setError("No deployment URL is configured in VITE_GAS_WEB_APP_URL.");
+      setMessage("");
+      return;
+    }
+    localStorage.setItem(LS_KEYS.GAS_URL, DEFAULT_GAS_URL);
+    setUrl(DEFAULT_GAS_URL);
+    setGasUrl(DEFAULT_GAS_URL);
+    setMessage("✅ Deployment Google Apps Script URL restored.");
+    setError("");
+  }
+
   async function testConnection() {
     setMessage(""); setError(""); setWorking(true);
     try {
@@ -2483,6 +2496,7 @@ function SettingsPage({ gasUrl, setGasUrl, user, onRefresh, entries, setEntries 
         <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Connection &amp; Sync</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button disabled={working} style={S.btn("primary")} onClick={saveUrl}><Save size={14} /> Save URL</button>
+          <button disabled={working || !DEFAULT_GAS_URL} style={S.btn()} onClick={useDeploymentUrl}>Use Deployment URL</button>
           <button disabled={working} style={S.btn()} onClick={testConnection}><CheckCircle2 size={14} /> Test Connection</button>
           <button disabled={working} style={S.btn("success")} onClick={onRefresh}><RefreshCw size={14} /> Load Sheet Data</button>
           <button disabled={working} style={S.btn("warning")} onClick={rebuild}>Rebuild Visible Sheets</button>
@@ -2570,6 +2584,12 @@ export default function App() {
   const localRevisionRef = useRef(0);
   const syncRequestRef = useRef(0);
 
+  useEffect(() => {
+    if (DEFAULT_GAS_URL && !localStorage.getItem(LS_KEYS.GAS_URL)) {
+      localStorage.setItem(LS_KEYS.GAS_URL, DEFAULT_GAS_URL);
+    }
+  }, []);
+
   function commitEntries(nextEntries) {
     localRevisionRef.current += 1;
     setEntries((current) => {
@@ -2610,6 +2630,19 @@ export default function App() {
     return () => clearInterval(id);
   }, [user?.role, gasUrl]);
 
+  const allowedTabs = useMemo(() => {
+    if (!user) return [];
+    return user.role === "admin"
+      ? ["dashboard", "meetingDashboard", "lossData", "dailyReview", "analytics", "settings"]
+      : ["submit"];
+  }, [user]);
+
+  useEffect(() => {
+    if (user && !allowedTabs.includes(tab)) {
+      setTab(user.role === "admin" ? "dashboard" : "submit");
+    }
+  }, [user, tab, allowedTabs]);
+
   const visibleEntries = useMemo(() => {
     if (!user) return [];
     return user.role === "admin"
@@ -2628,11 +2661,10 @@ export default function App() {
     <StatusLine gasUrl={gasUrl} lastSync={lastSync} syncError={syncError} onRefresh={refreshFromServer} syncing={syncing} />
     {user.role === "rep" && tab === "submit" && <RepSubmit user={user} gasUrl={gasUrl} entries={entries} setEntries={commitEntries} onRefresh={refreshFromServer} />}
     {user.role === "admin" && tab === "dashboard" && <Dashboard entries={entries} />}
-    {tab === "meetingDashboard" && <LossDataDashboard entries={visibleEntries} user={user} />}
+    {user.role === "admin" && tab === "meetingDashboard" && <LossDataDashboard entries={visibleEntries} user={user} />}
     {user.role === "admin" && tab === "lossData" && <MeetingDashboard entries={visibleEntries} user={user} />}
     {user.role === "admin" && tab === "dailyReview" && <DailyReviewDashboard entries={visibleEntries} user={user} />}
-    {user.role === "rep" && tab === "lossDataAnalytics" && <LossDataAndAnalytics entries={visibleEntries} user={user} />}
     {user.role === "admin" && tab === "analytics" && <AdminAnalyticsCombined entries={visibleEntries} user={user} />}
-    {tab === "settings" && <SettingsPage gasUrl={gasUrl} setGasUrl={setGasUrl} user={user} onRefresh={refreshFromServer} entries={entries} setEntries={commitEntries} />}
+    {user.role === "admin" && tab === "settings" && <SettingsPage gasUrl={gasUrl} setGasUrl={setGasUrl} user={user} onRefresh={refreshFromServer} entries={entries} setEntries={commitEntries} />}
   </main></div>;
 }

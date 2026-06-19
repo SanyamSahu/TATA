@@ -410,8 +410,14 @@ function saveReport(rawReport) {
   validateLossUsageDetails(report);
   var rawSheet = getOrCreateSheet(RAW_SHEET_NAME, RAW_HEADERS);
   var rawResult = upsertIntoRawSheet(rawSheet, report);
-  rebuildVisibleSheets();
-  return { mode: rawResult.mode, entry: rawResult.entry };
+  var rebuildWarning = "";
+  try {
+    rebuildVisibleSheets();
+  } catch (error) {
+    // Main Data is the source of truth. A report-formatting issue must not reject a submitted report.
+    rebuildWarning = "Report saved, but the visible sheets need rebuilding: " + error.message;
+  }
+  return { mode: rawResult.mode, entry: rawResult.entry, rebuildWarning: rebuildWarning };
 }
 
 function validateLossUsageDetails(report) {
@@ -420,11 +426,14 @@ function validateLossUsageDetails(report) {
     var categoryMinutes = toNumber(report[loss[0]]);
     if (categoryMinutes <= 0) return;
     var rows = Array.isArray(details[loss[0]]) ? details[loss[0]] : [];
-    if (!rows.length) throw new Error("Add machine-wise details for " + loss[1] + ".");
+    if (!rows.length) throw new Error("Add detail rows for " + loss[1] + ".");
     var detailedMinutes = 0;
     rows.forEach(function (row) {
       if (!toText(row.machine).trim() || toNumber(row.minutes) <= 0) {
-        throw new Error("Complete the Machine / Description and Time fields for " + loss[1] + ".");
+        throw new Error("Complete the description and Time fields for " + loss[1] + ".");
+      }
+      if (loss[0] === "lossBDMaintenance" && !toText(row.remarks).trim()) {
+        throw new Error("Enter the Fault / Remark for each " + loss[1] + " detail.");
       }
       detailedMinutes += toNumber(row.minutes);
     });
@@ -486,11 +495,11 @@ function normalizeReport(report) {
     timeAvailable: report.timeAvailable !== "" && report.timeAvailable != null
       ? toNumber(report.timeAvailable)
       : calculateAvailableTime(shift, report.hourlyActual),
-    cycleTimeSec: toNumber(report.cycleTimeSec),
-    pr: 1.0,
-    qr: getFixedQR(shop),
-    affectedDowntime: toNumber(report.affectedDowntime),
-    grossDowntime: toNumber(report.grossDowntime),
+    cycleTimeSec: configuredNumber(report.cycleTimeSec, 60),
+    pr: configuredNumber(report.pr, 1.0),
+    qr: configuredNumber(report.qr, getFixedQR(shop)),
+    affectedDowntime: toNumber(report.affectedDowntime != null ? report.affectedDowntime : report.affectedDTmin),
+    grossDowntime: toNumber(report.grossDowntime != null ? report.grossDowntime : report.grossDTmin),
     bdOccurrence: toNumber(report.bdOccurrence != null ? report.bdOccurrence : report.affectedDowntimeOccurrences),
     grossDTTarget: toNumber(report.grossDTTarget),
     majorBreakdown: toText(report.majorBreakdown),
@@ -715,7 +724,7 @@ function rebuildMeetingReportSheet(optionalEntries) {
   var entries = optionalEntries || readEntries();
   var rows = buildMeetingRows(entries);
 
-  sheet.clear();
+  sheet = resetSheetForRebuild(sheet);
   sheet.getRange(1, 1, 1, MEETING_HEADER_1.length).setValues([MEETING_HEADER_1]);
   sheet.getRange(2, 1, 1, MEETING_HEADER_2.length).setValues([MEETING_HEADER_2]);
 
@@ -830,8 +839,7 @@ function rebuildLossReportSheet(optionalEntries) {
   var sheet = getOrCreateSimpleSheet(LOSS_REPORT_SHEET_NAME);
   var entries = optionalEntries || readEntries();
   
-  sheet.clear();
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).breakApart();
+  sheet = resetSheetForRebuild(sheet);
   
   if (!entries.length) return;
   
@@ -1033,8 +1041,7 @@ function rebuildAnalyticalSheet(optionalEntries) {
   var sheet = getOrCreateSimpleSheet(ANALYTICAL_SHEET_NAME);
   var entries = optionalEntries || readEntries();
   var payload = buildAnalyticsPayload(entries);
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).breakApart();
-  sheet.clear();
+  sheet = resetSheetForRebuild(sheet);
 
   var row = 1;
   row = writeAnalyticsTitle(sheet, row, "TATA MOTORS Analytical Sheet");
@@ -1260,6 +1267,37 @@ function getOrCreateSheet(name, headers) {
   return sheet;
 }
 
+function resetSheetForRebuild(sheet) {
+  // These are generated views, so recreate them instead of attempting to repair
+  // an inconsistent legacy merge range. Main Data is never passed to this helper.
+  try {
+    sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).breakApart();
+    sheet.clear();
+    return sheet;
+  } catch (error) {
+    // Fall through to the replacement path for an unrecoverable legacy merge.
+  }
+
+  var spreadsheet = sheet.getParent();
+  var name = sheet.getName();
+  var index = sheet.getIndex() - 1;
+  var activeSheet = spreadsheet.getActiveSheet();
+
+  if (activeSheet && activeSheet.getSheetId() === sheet.getSheetId()) {
+    var fallbackSheet = spreadsheet.getSheets().filter(function (candidate) {
+      return candidate.getSheetId() !== sheet.getSheetId();
+    })[0];
+    if (fallbackSheet) spreadsheet.setActiveSheet(fallbackSheet);
+  }
+
+  // Some legacy sheets have a corrupted merge definition that even blocks
+  // deletion. Rename and hide that tab, then create a clean replacement.
+  var archiveName = "__rebuild_backup_" + name + "_" + new Date().getTime();
+  sheet.setName(archiveName);
+  sheet.hideSheet();
+  return spreadsheet.insertSheet(name, Math.max(0, index));
+}
+
 function migrateSheetHeaders(sheet, oldHeaders, newHeaders) {
   var lastRow = sheet.getLastRow();
   var oldWidth = oldHeaders.length;
@@ -1321,7 +1359,11 @@ function styleRawSheet(sheet, headers) {
 function styleMeetingSheet(sheet, rowCount) {
   var totalRows = Math.max(rowCount + 2, 3);
   var totalCols = MEETING_HEADER_1.length;
-  sheet.setFrozenRows(2);
+  try {
+    sheet.setFrozenRows(2);
+  } catch (error) {
+    // A manually merged range can block the freeze boundary; it must not block a report save.
+  }
   sheet.getRange(1, 1, 1, totalCols).setBackground("#111827").setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.getRange(2, 1, 1, totalCols).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.getRange(1, 1, 2, totalCols).setWrap(true);
@@ -1329,7 +1371,7 @@ function styleMeetingSheet(sheet, rowCount) {
   sheet.getRange(3, 1, Math.max(rowCount, 1), totalCols).setVerticalAlignment("middle");
   if (rowCount) {
     [4, 6, 7, 12, 13, 17, 18, 19].forEach(function (col) {
-      sheet.getRange(3, col, rowCount, 1).setBackground("#fff2cc");
+      sheet.getRange(3, col, rowCount, 1).setBackground("#ffffff");
     });
     [8, 9, 10, 11, 14, 15, 20, 21, 22, 24].forEach(function (col) {
       sheet.getRange(3, col, rowCount, 1).setBackground("#e5e7eb");
@@ -1547,8 +1589,8 @@ function calcDerived(entry) {
   var actual = toNumber(entry.actualProduction);
   var available = toNumber(entry.timeAvailable);
   var cycle = toNumber(entry.cycleTimeSec);
-  var pr = 1.0;
-  var qr = getFixedQR(entry.shop);
+  var pr = configuredNumber(entry.pr, 1.0);
+  var qr = configuredNumber(entry.qr, getFixedQR(entry.shop));
   var affected = toNumber(entry.affectedDowntime);
   var gross = toNumber(entry.grossDowntime);
   var bd = toNumber(entry.bdOccurrence != null ? entry.bdOccurrence : entry.affectedDowntimeOccurrences);
@@ -1556,7 +1598,6 @@ function calcDerived(entry) {
   var capacity = available > 0 && cycle > 0 ? round1((available * 60) / cycle) : 0;
   var productionTime = actual > 0 && cycle > 0 ? round1((actual * cycle) / 60) : 0;
   var netDt = round1(available - productionTime);
-  if (!affected) affected = Math.max(netDt, 0);
   var ar = available ? round1(productionTime / available) : 0;
   var oePct = round1(ar * pr * qr * 100);
   var lePct = capacity ? round1((actual / capacity) * 100) : 0;
@@ -1631,6 +1672,10 @@ function toNumber(value, fallback) {
   if (fallback == null) fallback = 0;
   var n = Number(value);
   return isNaN(n) || !isFinite(n) ? fallback : n;
+}
+
+function configuredNumber(value, fallback) {
+  return value === "" || value == null ? fallback : toNumber(value, fallback);
 }
 
 function toText(value, fallback) {

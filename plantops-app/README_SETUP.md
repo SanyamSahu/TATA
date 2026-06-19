@@ -93,18 +93,28 @@ Who has access: Anyone
 
 Copy the Web App URL ending in `/exec`.
 
-## 7. Connect frontend
+## 7. Connect frontend for deployment
 
-In the React app, login as admin, go to:
+For deployment, set the Apps Script Web App URL once as a frontend environment variable:
 
-```txt
-Settings
+```bash
+VITE_GAS_WEB_APP_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
 ```
 
-Paste the Apps Script Web App URL, click:
+On Vercel, add it in:
 
 ```txt
-Save URL → Test Connection → Load Sheet Data
+Project Settings → Environment Variables
+```
+
+Then redeploy the frontend. All admin and shop representative users will connect to the same Google Sheet backend automatically.
+
+For local testing, create `plantops-app/.env` with the same value, or copy `.env.production.example` and replace the URL. The admin Settings screen still allows testing or overriding the URL in the current browser when needed.
+
+After deployment, login as admin and click:
+
+```txt
+Settings → Test Connection → Load Sheet Data
 ```
 
 ## 8. Testing the flow
